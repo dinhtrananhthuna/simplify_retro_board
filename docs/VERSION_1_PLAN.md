@@ -79,9 +79,9 @@ CREATE TABLE Stickers (
 ## Kế hoạch triển khai
 
 ### Phase 1: Setup & Authentication (1 tuần)
-- [ ] Setup project Next.js
-- [ ] Cấu hình SQL Server local
-- [ ] Setup authentication
+- [x] Setup project Next.js
+- [x] Cấu hình SQL Server local
+- [x] Setup authentication
 - [ ] Setup basic UI components
 
 ### Phase 2: Core Board Features (1 tuần)

@@ -3,8 +3,9 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import type { AuthOptions } from "next-auth";
 
-const handler = NextAuth({
+const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -17,12 +18,9 @@ const handler = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
         const user = await prisma.user.findUnique({ where: { email: credentials.email } });
         if (!user) return null;
-        // Nếu bạn dùng bcrypt để hash password, hãy dùng compare
-        // Nếu chưa hash, chỉ so sánh trực tiếp (KHÔNG AN TOÀN, chỉ dùng demo)
-        // if (!(await compare(credentials.password, user.password))) return null;
-        // return user;
-        // Nếu chưa hash:
-        if (user.password !== credentials.password) return null;
+        // So sánh password đã hash
+        const isValid = await compare(credentials.password, user.password);
+        if (!isValid) return null;
         return user;
       },
     }),
@@ -34,6 +32,8 @@ const handler = NextAuth({
     signIn: "/auth/signin",
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
 
-export { handler as GET, handler as POST }; 
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST, authOptions }; 
