@@ -79,4 +79,17 @@ export async function DELETE(
       { status: 500 }
     );
   }
+}
+
+export async function GET(
+  req: Request,
+  { params }: { params: { boardId: string } }
+) {
+  const board = await prisma.board.findUnique({
+    where: { id: params.boardId },
+  });
+  if (!board) {
+    return NextResponse.json({ message: "Board not found" }, { status: 404 });
+  }
+  return NextResponse.json(board);
 } 
