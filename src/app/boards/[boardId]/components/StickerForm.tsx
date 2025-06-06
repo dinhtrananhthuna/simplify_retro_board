@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAppToast } from "@/hooks/useAppToast";
 
 export default function StickerForm({ boardId, stickerType, onCreated }: {
   boardId: string;
@@ -8,6 +9,7 @@ export default function StickerForm({ boardId, stickerType, onCreated }: {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const toast = useAppToast?.();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,8 +24,12 @@ export default function StickerForm({ boardId, stickerType, onCreated }: {
     if (res.ok) {
       setContent("");
       onCreated();
+      if (toast) toast.success("Tạo sticker thành công!");
+      else window.alert("Tạo sticker thành công!");
     } else {
       setError("Tạo sticker thất bại");
+      if (toast) toast.error("Tạo sticker thất bại!");
+      else window.alert("Tạo sticker thất bại!");
     }
     setLoading(false);
   };

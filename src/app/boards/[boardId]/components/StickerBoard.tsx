@@ -128,6 +128,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
                     boardId={boardId}
                     onStickerChanged={handleStickerChanged}
                     Draggable={Draggable}
+                    loading={loading}
                   />
                   {provided.placeholder}
                 </div>
