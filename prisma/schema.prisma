@@ -78,6 +78,7 @@ model Sticker {
   stickerType String   // "went-well", "to-improve", "action-items"
   x           Float    @default(0)
   y           Float    @default(0)
+  position    Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdBy   String   // Email của user tạo sticker

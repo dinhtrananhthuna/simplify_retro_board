@@ -8,17 +8,24 @@ export async function PATCH(req: Request, { params }: { params: { stickerId: str
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
-  const { content, stickerType, x, y } = await req.json();
+  const { content, stickerType, x, y, position } = await req.json();
   const sticker = await prisma.sticker.findUnique({ where: { id: params.stickerId } });
   if (!sticker) {
     return NextResponse.json({ message: "Sticker not found" }, { status: 404 });
   }
-  if (sticker.createdBy !== session.user.email) {
+  const board = await prisma.board.findUnique({ where: { id: sticker.boardId } });
+  if (sticker.createdBy !== session.user.email && session.user.email !== board?.createdBy) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
   const updated = await prisma.sticker.update({
     where: { id: params.stickerId },
-    data: { content, stickerType, x, y },
+    data: {
+      ...(content !== undefined ? { content } : {}),
+      ...(stickerType !== undefined ? { stickerType } : {}),
+      ...(x !== undefined ? { x } : {}),
+      ...(y !== undefined ? { y } : {}),
+      ...(position !== undefined ? { position } : {}),
+    },
   });
   return NextResponse.json(updated);
 }
