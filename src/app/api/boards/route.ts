@@ -20,13 +20,14 @@ export async function POST(req: Request) {
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
-  const { name } = await req.json();
-  if (!name || name.length < 2) {
-    return NextResponse.json({ message: "Invalid board name" }, { status: 400 });
+  const { title, description } = await req.json();
+  if (!title || title.length < 2) {
+    return NextResponse.json({ message: "Invalid board title" }, { status: 400 });
   }
   const board = await prisma.board.create({
     data: {
-      name,
+      title,
+      description: description ?? "",
       createdBy: session.user.email,
     },
   });

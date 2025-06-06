@@ -12,9 +12,9 @@ export async function PATCH(
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const { name } = await req.json();
-  if (!name || name.length < 2) {
-    return NextResponse.json({ message: "Invalid board name" }, { status: 400 });
+  const { title, description } = await req.json();
+  if (!title || title.length < 2) {
+    return NextResponse.json({ message: "Invalid board title" }, { status: 400 });
   }
 
   try {
@@ -32,7 +32,7 @@ export async function PATCH(
 
     const updatedBoard = await prisma.board.update({
       where: { id: params.boardId },
-      data: { name },
+      data: { title, description },
     });
 
     return NextResponse.json(updatedBoard);

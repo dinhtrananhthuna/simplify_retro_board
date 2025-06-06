@@ -14,13 +14,13 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 const boardSchema = z.object({
-  name: z.string().min(2, "Board name must be at least 2 characters"),
+  title: z.string().min(2, "Board title must be at least 2 characters"),
 });
 type BoardForm = z.infer<typeof boardSchema>;
 
 type Board = {
   id: string;
-  name: string;
+  title: string;
   createdAt: string;
 };
 
@@ -124,12 +124,12 @@ export default function DashboardClient() {
   };
 
   const filteredBoards = boards.filter((board) =>
-    board.name.toLowerCase().includes(searchQuery.toLowerCase())
+    board.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleEditClick = (board: Board) => {
     setEditBoard(board);
-    setValue("name", board.name);
+    setValue("title", board.title);
   };
 
   return (
@@ -149,10 +149,10 @@ export default function DashboardClient() {
               </DialogHeader>
               <form onSubmit={handleSubmit(onCreateBoard)} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Board Name</Label>
-                  <Input id="name" {...register("name")} />
+                  <Label htmlFor="title">Board Title</Label>
+                  <Input id="title" {...register("title")} />
                   <div className="min-h-[24px]">
-                    {errors.name && <span className="text-red-500 text-sm">{errors.name.message}</span>}
+                    {errors.title && <span className="text-red-500 text-sm">{errors.title.message}</span>}
                   </div>
                 </div>
                 <Button type="submit" disabled={isSubmitting} className="w-full">
@@ -232,7 +232,7 @@ export default function DashboardClient() {
               >
                 <Card className="hover:shadow-lg transition-all duration-200">
                   <CardHeader>
-                    <CardTitle className="truncate">{board.name}</CardTitle>
+                    <CardTitle className="truncate">{board.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-xs text-muted-foreground mb-4">
@@ -276,10 +276,10 @@ export default function DashboardClient() {
           </DialogHeader>
           <form onSubmit={handleSubmit(onEditBoard)} className="space-y-4">
             <div>
-              <Label htmlFor="edit-name">Board Name</Label>
-              <Input id="edit-name" {...register("name")} />
+              <Label htmlFor="edit-title">Board Title</Label>
+              <Input id="edit-title" {...register("title")} />
               <div className="min-h-[24px]">
-                {errors.name && <span className="text-red-500 text-sm">{errors.name.message}</span>}
+                {errors.title && <span className="text-red-500 text-sm">{errors.title.message}</span>}
               </div>
             </div>
             <Button type="submit" disabled={isSubmitting} className="w-full">
