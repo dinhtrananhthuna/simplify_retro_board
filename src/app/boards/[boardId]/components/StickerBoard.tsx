@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import StickerColumn from "./StickerColumn";
 import StickerForm from "./StickerForm";
+import Link from "next/link";
 
 const STICKER_TYPES = [
   { key: "went-well", label: "Went Well" },
@@ -32,7 +33,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     // eslint-disable-next-line
   }, [boardId]);
 
-  const handleStickerAdded = () => {
+  const handleStickerChanged = () => {
     fetchStickers();
   };
 
@@ -41,6 +42,9 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
 
   return (
     <div>
+      <div className="mb-2">
+        <Link href="/dashboard" className="text-blue-500 hover:underline text-sm">← Back to Boards</Link>
+      </div>
       <h1 className="text-2xl font-bold mb-4">{board.title}</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {STICKER_TYPES.map((col) => (
@@ -50,7 +54,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
             label={col.label}
             stickers={stickers.filter((s) => s.stickerType === col.key)}
             boardId={boardId}
-            onStickerAdded={handleStickerAdded}
+            onStickerChanged={handleStickerChanged}
           />
         ))}
       </div>
