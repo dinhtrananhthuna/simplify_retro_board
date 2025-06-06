@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  name         String
+  role         String        @default("member")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  boardMembers BoardMember[]
+  stickers     Sticker[]
+
+  @@map("users")
+}
+
+model Board {
+  id           String        @id @default(uuid())
+  name         String
+  status       String        @default("active")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  createdBy    String        @map("created_by")
+  boardMembers BoardMember[]
+  stickers     Sticker[]
+
+  @@map("boards")
+}
+
+model BoardMember {
+  boardId String @map("board_id")
+  userId  String @map("user_id")
+  role    String
+
+  board Board @relation(fields: [boardId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@id([boardId, userId])
+  @@map("board_members")
+}
+
+model Sticker {
+  id         String   @id @default(uuid())
+  boardId    String   @map("board_id")
+  columnType String   @map("column_type")
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdBy  String   @map("created_by")
+
+  board Board @relation(fields: [boardId], references: [id])
+  user  User  @relation(fields: [createdBy], references: [id])
+
+  @@map("stickers")
+}
