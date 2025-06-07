@@ -87,6 +87,14 @@ export async function GET(
 ) {
   const board = await prisma.board.findUnique({
     where: { id: params.boardId },
+    include: {
+      members: {
+        select: {
+          email: true,
+          role: true,
+        },
+      },
+    },
   });
   if (!board) {
     return NextResponse.json({ message: "Board not found" }, { status: 404 });

@@ -91,7 +91,7 @@ CREATE TABLE Stickers (
 - [x] Basic UI implementation
 
 ### Phase 3: Team Features (1 tuần)
-- [ ] Implement invite system
+- [x] Implement invite system
 - [ ] Add member management
 - [ ] Implement real-time presence
 - [ ] Polish UI/UX

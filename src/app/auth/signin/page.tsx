@@ -41,7 +41,7 @@ export default function SignInPage() {
     else if (res?.ok) {
       toast.success("Login successful!");
       if (inviteBoard) {
-        window.location.href = `/boards/${inviteBoard}`;
+        window.location.href = `/boards/${inviteBoard}/invite`;
       } else {
         window.location.href = "/dashboard";
       }

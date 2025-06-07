@@ -31,5 +31,12 @@ export async function POST(req: Request) {
       createdBy: session.user.email,
     },
   });
+  await prisma.boardMember.create({
+    data: {
+      boardId: board.id,
+      email: session.user.email,
+      role: "owner",
+    },
+  });
   return NextResponse.json(board);
 } 

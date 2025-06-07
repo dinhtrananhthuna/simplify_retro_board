@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
 import { useAppToast } from "@/hooks/useAppToast";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const STICKER_TYPES = [
   { key: "went-well", label: "Went Well" },
@@ -58,6 +61,9 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     return acc;
   }, {} as Record<string, any[]>);
 
+  // Lấy danh sách thành viên
+  const members: { email: string; role: string }[] = board.members || [];
+
   return (
     <div>
       <div className="mb-2">
@@ -65,15 +71,46 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
       </div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">{board.title}</h1>
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={handleCopyInviteLink}
-          title="Copy invite link"
-        >
-          <Share2 className="w-4 h-4" />
-          Share
-        </Button>
+        <div className="flex items-center gap-3">
+          <TooltipProvider>
+            <div className="flex items-center gap-1">
+              {members.map((m) => (
+                <Tooltip key={m.email}>
+                  <TooltipTrigger asChild>
+                    <Avatar
+                      className={
+                        m.role === "owner"
+                          ? "bg-yellow-400 text-black border border-yellow-500"
+                          : "bg-gray-500 text-white border border-gray-400"
+                      }
+                    >
+                      <AvatarFallback>
+                        {m.email?.[0]?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    <div className="font-semibold">{m.email}</div>
+                    <div className="mt-1">
+                      <span className={m.role === "owner" ? "text-yellow-600 font-bold" : "text-gray-600"}>
+                        {m.role === "owner" ? "Owner" : "Member"}
+                      </span>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={handleCopyInviteLink}
+            title="Copy invite link"
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </Button>
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {STICKER_TYPES.map((col) => (
