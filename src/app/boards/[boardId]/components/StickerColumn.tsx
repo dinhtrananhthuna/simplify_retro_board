@@ -1,6 +1,6 @@
 import StickerForm from "./StickerForm";
 import StickerCard from "./StickerCard";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function StickerColumn({
   type,
@@ -33,12 +33,23 @@ export default function StickerColumn({
             <div key={idx} className="bg-gray-200 animate-pulse h-16 rounded" />
           ))
         ) : (
-          stickers
-            .slice()
-            .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-            .map((sticker) => (
-              <StickerCard key={sticker.id} sticker={sticker} onChanged={onStickerChanged} />
-            ))
+          <AnimatePresence initial={false}>
+            {stickers
+              .slice()
+              .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+              .map((sticker) => (
+                <motion.div
+                  key={sticker.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  layout
+                >
+                  <StickerCard sticker={sticker} onChanged={onStickerChanged} />
+                </motion.div>
+              ))}
+          </AnimatePresence>
         )}
       </div>
     </motion.div>

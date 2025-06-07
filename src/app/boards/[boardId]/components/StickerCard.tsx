@@ -40,7 +40,9 @@ export default function StickerCard({ sticker, onChanged }: { sticker: any, onCh
   };
 
   return (
-    <div className="relative bg-gray-50 rounded-lg shadow p-3 text-sm flex flex-col gap-2 border border-gray-200 group min-h-[90px]">
+    <div
+      className="relative bg-gray-50 rounded-lg shadow p-3 text-sm flex flex-col gap-2 border border-gray-200 group min-h-[90px] transition-all duration-200 hover:shadow-lg hover:scale-[1.03] cursor-pointer"
+    >
       {/* Nút Edit/Delete */}
       {isOwner && !editing && (
         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">

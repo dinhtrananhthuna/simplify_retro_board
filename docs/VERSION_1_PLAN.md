@@ -82,13 +82,13 @@ CREATE TABLE Stickers (
 - [x] Setup project Next.js
 - [x] Cấu hình SQL Server local
 - [x] Setup authentication
-- [ ] Setup basic UI components
+- [x] Setup basic UI components
 
 ### Phase 2: Core Board Features (1 tuần)
-- [ ] Implement board CRUD
-- [ ] Implement sticker management
-- [ ] Setup real-time updates
-- [ ] Basic UI implementation
+- [x] Implement board CRUD
+- [x] Implement sticker management
+- [x] Setup real-time updates
+- [x] Basic UI implementation
 
 ### Phase 3: Team Features (1 tuần)
 - [ ] Implement invite system
