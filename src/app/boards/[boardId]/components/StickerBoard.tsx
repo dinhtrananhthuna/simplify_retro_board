@@ -64,6 +64,11 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
   // Lấy danh sách thành viên
   const members: { email: string; role: string }[] = board.members || [];
 
+  // Hiển thị tối đa 5 avatar, còn lại gom vào +N
+  const MAX_AVATAR = 5;
+  const visibleMembers = members.slice(0, MAX_AVATAR);
+  const extraMembers = members.length > MAX_AVATAR ? members.slice(MAX_AVATAR) : [];
+
   return (
     <div>
       <div className="mb-2">
@@ -74,7 +79,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
         <div className="flex items-center gap-3">
           <TooltipProvider>
             <div className="flex items-center gap-1">
-              {members.map((m) => (
+              {visibleMembers.map((m) => (
                 <Tooltip key={m.email}>
                   <TooltipTrigger asChild>
                     <Avatar
@@ -99,6 +104,25 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
                   </TooltipContent>
                 </Tooltip>
               ))}
+              {extraMembers.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar className="bg-gray-700 text-white border border-gray-400">
+                      <AvatarFallback>+{extraMembers.length}</AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs max-w-[220px]">
+                    <div className="font-semibold mb-1">Other members:</div>
+                    <ul className="list-disc pl-4">
+                      {extraMembers.map((m) => (
+                        <li key={m.email}>
+                          {m.email} <span className={m.role === "owner" ? "text-yellow-600 font-bold" : "text-gray-600"}>({m.role === "owner" ? "Owner" : "Member"})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </TooltipProvider>
           <Button
