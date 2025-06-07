@@ -23,9 +23,14 @@ export async function POST(req: Request) {
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
-  const { content, stickerType, x, y, boardId } = await req.json();
+  const { content, stickerType, x, y, boardId, position } = await req.json();
   if (!content || !stickerType || !boardId) {
     return NextResponse.json({ message: "Missing fields" }, { status: 400 });
+  }
+  let finalPosition = position;
+  if (finalPosition === undefined) {
+    // Đếm số lượng sticker cùng column
+    finalPosition = await prisma.sticker.count({ where: { boardId, stickerType } });
   }
   const sticker = await prisma.sticker.create({
     data: {
@@ -35,6 +40,7 @@ export async function POST(req: Request) {
       y: y ?? 0,
       boardId,
       createdBy: session.user.email,
+      position: finalPosition,
     },
   });
   return NextResponse.json(sticker);

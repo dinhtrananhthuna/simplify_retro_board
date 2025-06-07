@@ -16,10 +16,16 @@ export default function StickerForm({ boardId, stickerType, onCreated }: {
     if (!content.trim()) return;
     setLoading(true);
     setError("");
+    const resCount = await fetch(`/api/stickers?boardId=${boardId}`);
+    let position = 0;
+    if (resCount.ok) {
+      const allStickers = await resCount.json();
+      position = allStickers.filter((s: any) => s.stickerType === stickerType).length;
+    }
     const res = await fetch("/api/stickers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content, stickerType, boardId }),
+      body: JSON.stringify({ content, stickerType, boardId, position }),
     });
     if (res.ok) {
       setContent("");

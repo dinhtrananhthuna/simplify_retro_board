@@ -8,7 +8,6 @@ export default function StickerColumn({
   stickers,
   boardId,
   onStickerChanged,
-  Draggable,
   loading = false,
 }: {
   type: string;
@@ -16,7 +15,6 @@ export default function StickerColumn({
   stickers: any[];
   boardId: string;
   onStickerChanged: () => void;
-  Draggable: any;
   loading?: boolean;
 }) {
   return (
@@ -38,22 +36,8 @@ export default function StickerColumn({
           stickers
             .slice()
             .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-            .map((sticker, idx) => (
-              <Draggable draggableId={sticker.id} index={idx} key={sticker.id}>
-                {(provided: any) => (
-                  <motion.div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <StickerCard sticker={sticker} onChanged={onStickerChanged} />
-                  </motion.div>
-                )}
-              </Draggable>
+            .map((sticker) => (
+              <StickerCard key={sticker.id} sticker={sticker} onChanged={onStickerChanged} />
             ))
         )}
       </div>
