@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAppToast } from "@/hooks/useAppToast";
+import { Loader2 } from "lucide-react";
 
 export default function StickerForm({ boardId, stickerType, onCreated }: {
   boardId: string;
@@ -43,14 +44,14 @@ export default function StickerForm({ boardId, stickerType, onCreated }: {
   return (
     <form onSubmit={handleSubmit} className="flex gap-2 items-center">
       <input
-        className="flex-1 rounded border px-2 py-1 text-sm"
+        className="flex-1 rounded border px-2 py-1 text-sm bg-background"
         placeholder="Add a sticker..."
         value={content}
         onChange={e => setContent(e.target.value)}
         disabled={loading}
       />
-      <button type="submit" className="btn btn-primary" disabled={loading || !content.trim()}>
-        {loading ? "Adding..." : "+"}
+      <button type="submit" className="btn btn-primary flex items-center justify-center" disabled={loading || !content.trim()}>
+        {loading ? <Loader2 className="animate-spin w-4 h-4" /> : "+"}
       </button>
       {error && <span className="text-red-500 text-xs ml-2">{error}</span>}
     </form>

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import StickerColumn from "./StickerColumn";
 import StickerForm from "./StickerForm";
 import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const STICKER_TYPES = [
   { key: "went-well", label: "Went Well" },
