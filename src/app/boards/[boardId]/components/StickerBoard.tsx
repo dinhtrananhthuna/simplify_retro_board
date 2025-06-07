@@ -4,6 +4,9 @@ import StickerColumn from "./StickerColumn";
 import StickerForm from "./StickerForm";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Share2 } from "lucide-react";
+import { useAppToast } from "@/hooks/useAppToast";
 
 const STICKER_TYPES = [
   { key: "went-well", label: "Went Well" },
@@ -15,6 +18,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
   const [board, setBoard] = useState<any>(null);
   const [stickers, setStickers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const toast = useAppToast?.();
 
   const fetchBoard = async () => {
     const res = await fetch(`/api/boards/${boardId}`);
@@ -38,6 +42,13 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     fetchStickers();
   };
 
+  const handleCopyInviteLink = () => {
+    const inviteUrl = `${window.location.origin}/boards/${boardId}/invite`;
+    navigator.clipboard.writeText(inviteUrl);
+    if (toast) toast.success("Invite link copied!");
+    else window.alert("Invite link copied!");
+  };
+
   if (loading) return <div>Loading...</div>;
   if (!board) return <div>Board not found</div>;
 
@@ -52,7 +63,18 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
       <div className="mb-2">
         <Link href="/dashboard" className="text-blue-500 hover:underline text-sm">← Back to Boards</Link>
       </div>
-      <h1 className="text-2xl font-bold mb-4">{board.title}</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">{board.title}</h1>
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={handleCopyInviteLink}
+          title="Copy invite link"
+        >
+          <Share2 className="w-4 h-4" />
+          Share
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {STICKER_TYPES.map((col) => (
           <StickerColumn
