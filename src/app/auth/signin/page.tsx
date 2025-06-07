@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppToast } from "@/hooks/useAppToast";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -18,6 +19,9 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function SignInPage() {
   const toast = useAppToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteBoard = searchParams.get("inviteBoard");
   const [loading, setLoading] = useState(false);
   const {
     register,
@@ -36,7 +40,11 @@ export default function SignInPage() {
     if (res?.error) toast.error("Invalid email or password");
     else if (res?.ok) {
       toast.success("Login successful!");
-      window.location.href = "/dashboard";
+      if (inviteBoard) {
+        window.location.href = `/boards/${inviteBoard}`;
+      } else {
+        window.location.href = "/dashboard";
+      }
     }
     setLoading(false);
   };
@@ -71,6 +79,15 @@ export default function SignInPage() {
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            Don't have an account?{' '}
+            <a
+              href={inviteBoard ? `/auth/register?inviteBoard=${inviteBoard}` : "/auth/register"}
+              className="text-blue-500 hover:underline"
+            >
+              Register
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>

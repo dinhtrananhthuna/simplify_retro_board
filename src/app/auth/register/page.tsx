@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteBoard = searchParams.get("inviteBoard");
   const toast = useAppToast();
   const [loading, setLoading] = useState(false);
   const {
@@ -48,7 +50,11 @@ export default function RegisterPage() {
     });
     if (res.ok) {
       toast.success("Register successfully! Please sign in.");
-      router.push("/auth/signin");
+      if (inviteBoard) {
+        router.push(`/auth/signin?inviteBoard=${inviteBoard}`);
+      } else {
+        router.push("/auth/signin");
+      }
     } else {
       const result = await res.json();
       toast.error(result.message || "Registration failed");
@@ -95,6 +101,15 @@ export default function RegisterPage() {
               {loading ? "Registering..." : "Register"}
             </Button>
           </form>
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            Already have an account?{' '}
+            <a
+              href={inviteBoard ? `/auth/signin?inviteBoard=${inviteBoard}` : "/auth/signin"}
+              className="text-blue-500 hover:underline"
+            >
+              Sign In
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>
