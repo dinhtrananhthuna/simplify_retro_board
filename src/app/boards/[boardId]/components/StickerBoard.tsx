@@ -128,13 +128,13 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
   const extraMembers = members.length > MAX_AVATAR ? members.slice(MAX_AVATAR) : [];
 
   return (
-    <div>
-      <div className="mb-2">
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="mb-4">
         <Link href="/dashboard" className="text-blue-500 hover:underline text-sm">← Back to Boards</Link>
       </div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold">{board.title}</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <TooltipProvider>
             <div className="flex items-center gap-1">
               {visibleMembers.map((m) => (
@@ -207,7 +207,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
           </Button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 overflow-hidden">
         {STICKER_TYPES.map((col) => (
           <StickerColumn
             key={col.key}

@@ -85,6 +85,11 @@ export async function GET(
   req: Request,
   { params }: { params: { boardId: string } }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   const board = await prisma.board.findUnique({
     where: { id: params.boardId },
     include: {
@@ -96,8 +101,18 @@ export async function GET(
       },
     },
   });
+  
   if (!board) {
     return NextResponse.json({ message: "Board not found" }, { status: 404 });
   }
+
+  // Kiểm tra xem user có quyền truy cập board này không
+  const isMember = board.members.some(member => member.email === session.user?.email) || 
+                   board.createdBy === session.user?.email;
+  
+  if (!isMember) {
+    return NextResponse.json({ message: "Access denied" }, { status: 403 });
+  }
+
   return NextResponse.json(board);
 } 
