@@ -54,14 +54,14 @@ interface ClientToServerEvents {
 ## 2. Các bước triển khai
 
 ### Phase 1: Setup Infrastructure (1 ngày)
-- [ ] Cài đặt dependencies: socket.io, socket.io-client
-- [ ] Tạo các file types cho socket events
-- [ ] Cập nhật Next.js config để hỗ trợ WebSocket
-- [ ] Tạo API route cho socket
-- [ ] Thêm model BoardPresence vào database schema
+- [x] Cài đặt dependencies: socket.io, socket.io-client
+- [x] Tạo các file types cho socket events
+- [x] Cập nhật Next.js config để hỗ trợ WebSocket
+- [x] Tạo API route cho socket
+- [x] Thêm model BoardPresence vào database schema
 
 ### Phase 2: Server Implementation (2 ngày)
-- [ ] Implement socket server với authentication
+- [x] Implement socket server với authentication
 - [ ] Xử lý presence events (join/leave)
 - [ ] Xử lý sticker events (create/update/delete/move)
 - [ ] Xử lý vote events
