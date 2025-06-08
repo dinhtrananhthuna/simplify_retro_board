@@ -24,7 +24,7 @@ export interface ServerToClientEvents {
 
 export interface ClientToServerEvents {
   // Presence events
-  'presence:join': (data: { boardId: string }) => void;
+  'presence:join': (data: { boardId: string; email?: string }) => void;
   'presence:leave': (data: { boardId: string }) => void;
   
   // Sticker events
