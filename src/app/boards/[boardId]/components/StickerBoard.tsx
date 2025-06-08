@@ -24,6 +24,8 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
   const [loading, setLoading] = useState(true);
   const toast = useAppToast?.();
   const socket = useSocket(boardId);
+  // State realtime presence
+  const [presenceMembers, setPresenceMembers] = useState<Array<{ email: string; role: string; online: boolean }>>([]);
 
   const fetchBoard = async () => {
     const res = await fetch(`/api/boards/${boardId}`);
@@ -68,6 +70,31 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     };
   }, [socket]);
 
+  // --- SOCKET REALTIME PRESENCE ---
+  useSocket(
+    boardId,
+    {
+      onPresenceList: (data) => {
+        setPresenceMembers(data.members);
+      },
+      onPresenceJoined: (data) => {
+        setPresenceMembers((prev) => {
+          // Nếu đã có thì update online, chưa có thì thêm mới
+          const exists = prev.find((m) => m.email === data.email);
+          if (exists) {
+            return prev.map((m) => m.email === data.email ? { ...m, online: true } : m);
+          }
+          return [...prev, { ...data, online: true }];
+        });
+        if (toast) toast.success(`${data.email} vừa tham gia board!`);
+      },
+      onPresenceLeft: (data) => {
+        setPresenceMembers((prev) => prev.map((m) => m.email === data.email ? { ...m, online: false } : m));
+        if (toast) toast.info(`${data.email} vừa rời board!`);
+      },
+    }
+  );
+
   // --- OVERRIDE handleStickerChanged để emit socket ---
   const handleStickerChanged = () => {
     fetchStickers();
@@ -89,8 +116,11 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     return acc;
   }, {} as Record<string, any[]>);
 
-  // Lấy danh sách thành viên
-  const members: { email: string; role: string }[] = board.members || [];
+  // Lấy danh sách thành viên (kết hợp từ board.members và presenceMembers để có đủ role và trạng thái online)
+  const members: { email: string; role: string; online?: boolean }[] = (board.members || []).map((m: any) => {
+    const presence = presenceMembers.find((p) => p.email === m.email);
+    return { ...m, online: presence ? presence.online : false };
+  });
 
   // Hiển thị tối đa 5 avatar, còn lại gom vào +N
   const MAX_AVATAR = 5;
@@ -110,23 +140,35 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
               {visibleMembers.map((m) => (
                 <Tooltip key={m.email}>
                   <TooltipTrigger asChild>
-                    <Avatar
-                      className={
-                        m.role === "owner"
-                          ? "bg-yellow-400 text-black border border-yellow-500"
-                          : "bg-gray-500 text-white border border-gray-400"
-                      }
-                    >
-                      <AvatarFallback>
-                        {m.email?.[0]?.toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                      <Avatar
+                        className={
+                          m.role === "owner"
+                            ? "bg-yellow-400 text-black border border-yellow-500"
+                            : "bg-gray-500 text-white border border-gray-400"
+                        }
+                      >
+                        <AvatarFallback>
+                          {m.email?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      {/* Chấm trạng thái online/offline */}
+                      <span
+                        className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${m.online ? "bg-green-500" : "bg-gray-400"}`}
+                        title={m.online ? "Đang online" : "Đang offline"}
+                      />
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="text-xs">
                     <div className="font-semibold">{m.email}</div>
                     <div className="mt-1">
                       <span className={m.role === "owner" ? "text-yellow-600 font-bold" : "text-gray-600"}>
                         {m.role === "owner" ? "Owner" : "Member"}
+                      </span>
+                    </div>
+                    <div className="mt-1">
+                      <span className={m.online ? "text-green-600" : "text-gray-500"}>
+                        {m.online ? "Đang online" : "Đang offline"}
                       </span>
                     </div>
                   </TooltipContent>
@@ -145,6 +187,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
                       {extraMembers.map((m) => (
                         <li key={m.email}>
                           {m.email} <span className={m.role === "owner" ? "text-yellow-600 font-bold" : "text-gray-600"}>({m.role === "owner" ? "Owner" : "Member"})</span>
+                          <span className={m.online ? "ml-2 text-green-600" : "ml-2 text-gray-500"}>{m.online ? "● online" : "● offline"}</span>
                         </li>
                       ))}
                     </ul>
