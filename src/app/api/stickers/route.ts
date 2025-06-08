@@ -43,5 +43,12 @@ export async function POST(req: Request) {
       position: finalPosition,
     },
   });
+  // Emit socket event nếu có io
+  try {
+    const io = globalThis.io || (globalThis as any).io || (typeof res !== 'undefined' && res.socket && res.socket.server && res.socket.server.io);
+    if (io) {
+      io.emit('sticker:created', sticker);
+    }
+  } catch (e) { /* ignore */ }
   return NextResponse.json(sticker);
 } 

@@ -70,7 +70,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
 
   // --- OVERRIDE handleStickerChanged để emit socket ---
   const handleStickerChanged = () => {
-    // Không fetch lại, vì đã có realtime
+    fetchStickers();
   };
 
   const handleCopyInviteLink = () => {
