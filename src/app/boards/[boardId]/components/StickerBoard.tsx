@@ -10,6 +10,7 @@ import { useAppToast } from "@/hooks/useAppToast";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSocket } from "@/hooks/useSocket";
 
 const STICKER_TYPES = [
   { key: "went-well", label: "Went Well" },
@@ -22,6 +23,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
   const [stickers, setStickers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const toast = useAppToast?.();
+  const socket = useSocket(boardId);
 
   const fetchBoard = async () => {
     const res = await fetch(`/api/boards/${boardId}`);
@@ -41,8 +43,34 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     // eslint-disable-next-line
   }, [boardId]);
 
+  // --- SOCKET REALTIME ---
+  useEffect(() => {
+    if (!socket) return;
+    // Khi có sticker mới
+    const handleCreated = (data: any) => {
+      setStickers((prev) => [...prev, data]);
+    };
+    // Khi sticker được cập nhật
+    const handleUpdated = (data: any) => {
+      setStickers((prev) => prev.map((s) => s.id === data.id ? data : s));
+    };
+    // Khi sticker bị xóa
+    const handleDeleted = (data: { id: string }) => {
+      setStickers((prev) => prev.filter((s) => s.id !== data.id));
+    };
+    socket.on("sticker:created", handleCreated);
+    socket.on("sticker:updated", handleUpdated);
+    socket.on("sticker:deleted", handleDeleted);
+    return () => {
+      socket.off("sticker:created", handleCreated);
+      socket.off("sticker:updated", handleUpdated);
+      socket.off("sticker:deleted", handleDeleted);
+    };
+  }, [socket]);
+
+  // --- OVERRIDE handleStickerChanged để emit socket ---
   const handleStickerChanged = () => {
-    fetchStickers();
+    // Không fetch lại, vì đã có realtime
   };
 
   const handleCopyInviteLink = () => {

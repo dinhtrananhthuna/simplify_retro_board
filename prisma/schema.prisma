@@ -70,6 +70,7 @@ model Board {
   createdBy   String        // Email của user tạo board
   stickers    Sticker[]
   members     BoardMember[]
+  presences   BoardPresence[]
 }
 
 model Sticker {
@@ -118,4 +119,18 @@ model Comment {
   email     String   // Email của user comment
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model BoardPresence {
+  id        String   @id @default(cuid())
+  boardId   String
+  email     String
+  role      String
+  online    Boolean  @default(false)
+  lastSeen  DateTime
+  board     Board    @relation(fields: [boardId], references: [id])
+
+  @@unique([boardId, email])
+  @@index([boardId])
+  @@index([email])
 }
