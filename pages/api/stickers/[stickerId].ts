@@ -31,6 +31,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ...(y !== undefined ? { y } : {}),
         ...(position !== undefined ? { position } : {}),
       },
+      include: {
+        votes: true,
+        comments: {
+          orderBy: { createdAt: 'asc' }
+        }
+      }
     });
     // Emit socket event nếu có io
     const socketRes = res.socket as { server?: { io?: { emit: (event: string, data: unknown) => void } } };

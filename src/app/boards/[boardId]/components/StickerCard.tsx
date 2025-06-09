@@ -4,6 +4,9 @@ import { Pencil, Trash2, CheckCircle, XCircle } from "lucide-react";
 import CommentSection from "./CommentSection";
 import { Sticker, Vote } from "@/types/board";
 import { motion } from "framer-motion";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 function truncateEmail(email: string, max = 18) {
   if (!email) return "";
@@ -133,35 +136,95 @@ export default function StickerCard({
           </button>
         </div>
       )}
+      
       {editing ? (
-        <form onSubmit={handleEdit} className="flex flex-col gap-1">
-          <textarea
-            className="rounded border px-2 py-1 text-sm text-black"
-            value={content}
-            onChange={e => setContent(e.target.value)}
-            disabled={loading}
-            autoFocus
-          />
-          <div className="flex gap-2 mt-1">
-            <button
-              type="submit"
-              className="p-1 text-green-600 hover:bg-green-100 rounded"
-              title="Cập nhật"
-              disabled={loading || !content.trim()}
+        <motion.form 
+          onSubmit={handleEdit} 
+          className="space-y-2"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex gap-2">
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
             >
-              <CheckCircle size={20} />
-            </button>
-            <button
-              type="button"
-              className="p-1 text-gray-500 hover:bg-gray-200 rounded"
-              onClick={() => setEditing(false)}
-              title="Hủy"
-              disabled={loading}
-            >
-              <XCircle size={20} />
-            </button>
+              <Avatar className="w-7 h-7 bg-gradient-to-br from-green-500 to-emerald-600 text-white text-[10px] flex-shrink-0 mt-1 ring-2 ring-white shadow-sm">
+                <AvatarFallback>
+                  {session?.user?.email?.[0]?.toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+            </motion.div>
+            <div className="flex-1">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
+              >
+                <Textarea
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  placeholder="Cập nhật nội dung sticker..."
+                  className="min-h-[80px] text-sm resize-none border-green-200 focus:border-green-400 transition-all duration-200"
+                  disabled={loading}
+                  maxLength={300}
+                  autoFocus
+                />
+              </motion.div>
+              <motion.div 
+                className="flex justify-between items-center mt-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <span className="text-[10px] text-gray-500">
+                  {content.length}/300
+                </span>
+                <div className="flex gap-1">
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-3 text-[10px] border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
+                      onClick={() => setEditing(false)}
+                      disabled={loading}
+                    >
+                      <XCircle size={10} className="mr-1" />
+                      Hủy
+                    </Button>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      className="h-7 px-3 text-[10px] bg-green-600 hover:bg-green-700 text-white transition-all duration-200"
+                      disabled={loading || !content.trim()}
+                    >
+                      <motion.div
+                        animate={loading ? { 
+                          rotate: [0, 360],
+                          scale: [1, 1.1, 1] 
+                        } : { rotate: 0, scale: 1 }}
+                        transition={{ 
+                          duration: loading ? 0.8 : 0.2,
+                          repeat: loading ? Infinity : 0,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        <CheckCircle size={10} className="mr-1" />
+                      </motion.div>
+                      {loading ? "Đang cập nhật..." : "Cập nhật"}
+                    </Button>
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
           </div>
-        </form>
+        </motion.form>
       ) : (
         <>
           <div className="font-medium break-words whitespace-pre-line text-black">{sticker.content}</div>
@@ -198,6 +261,7 @@ export default function StickerCard({
                   {voteCount}
                 </motion.span>
               </motion.button>
+              
               <motion.button
                 onClick={handleCommentToggle}
                 className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${

@@ -149,7 +149,17 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     // Khi sticker được cập nhật
     const handleUpdated = (data: Sticker) => {
       console.log('Sticker updated:', data);
-      setStickers((prev) => prev.map((s) => s.id === data.id ? data : s));
+      setStickers((prev) => prev.map((s) => {
+        if (s.id === data.id) {
+          // Merge dữ liệu mới với comments/votes hiện có nếu dữ liệu mới không có
+          return {
+            ...data,
+            votes: data.votes && data.votes.length >= 0 ? data.votes : s.votes || [],
+            comments: data.comments && data.comments.length >= 0 ? data.comments : s.comments || []
+          };
+        }
+        return s;
+      }));
     };
     // Khi sticker bị xóa
     const handleDeleted = (data: { id: string }) => {
