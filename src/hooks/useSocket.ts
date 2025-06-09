@@ -107,7 +107,7 @@ export function useSocket(
       console.log(`[useSocket] Socket disconnected`);
     });
 
-    socket.on('connect_error', (error: any) => {
+    socket.on('connect_error', (error: Error) => {
       console.error(`[useSocket] Socket connection error:`, error);
     });
 

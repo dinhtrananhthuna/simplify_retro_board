@@ -1,7 +1,9 @@
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pencil, Trash2, CheckCircle, XCircle } from "lucide-react";
 import CommentSection from "./CommentSection";
+import { Sticker, Vote } from "@/types/board";
+import { motion, AnimatePresence } from "framer-motion";
 
 function truncateEmail(email: string, max = 18) {
   if (!email) return "";
@@ -17,7 +19,7 @@ export default function StickerCard({
   onCommentUpdate,
   onCommentDelete
 }: { 
-  sticker: any;
+  sticker: Sticker;
   onChanged: () => void;
   onVoteAdd: (stickerId: string) => void;
   onVoteRemove: (stickerId: string) => void;
@@ -38,9 +40,27 @@ export default function StickerCard({
   const comments = sticker.comments || [];
   const commentCount = comments.length;
   
+  // Animation states for real-time updates
+  const [isUpdated, setIsUpdated] = useState(false);
+  const [prevVoteCount, setPrevVoteCount] = useState(voteCount);
+  const [prevCommentCount, setPrevCommentCount] = useState(commentCount);
+  
   // Kiểm tra user hiện tại đã vote chưa
   const currentUserEmail = session?.user?.email;
-  const hasVoted = votes.some((vote: any) => vote.email === currentUserEmail);
+  const hasVoted = votes.some((vote: Vote) => vote.email === currentUserEmail);
+
+  // Detect real-time changes and trigger animations
+  useEffect(() => {
+    if (voteCount !== prevVoteCount || commentCount !== prevCommentCount) {
+      setIsUpdated(true);
+      const timer = setTimeout(() => setIsUpdated(false), 1000);
+      
+      setPrevVoteCount(voteCount);
+      setPrevCommentCount(commentCount);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [voteCount, commentCount, prevVoteCount, prevCommentCount]);
 
   const handleDelete = async () => {
     if (!confirm("Bạn có chắc muốn xóa sticker này?")) return;
@@ -83,8 +103,24 @@ export default function StickerCard({
   };
 
   return (
-    <div
-      className="relative bg-gray-50 rounded-lg shadow p-3 text-sm flex flex-col gap-2 border border-gray-200 group min-h-[90px] transition-all duration-200 hover:shadow-lg hover:scale-[1.03] cursor-pointer"
+    <motion.div
+      className="relative bg-gray-50 rounded-lg shadow p-3 text-sm flex flex-col gap-2 border border-gray-200 group min-h-[90px] cursor-pointer"
+      animate={{
+        scale: isUpdated ? [1, 1.02, 1] : 1,
+        borderColor: isUpdated ? ["#e5e7eb", "#3b82f6", "#e5e7eb"] : "#e5e7eb",
+        boxShadow: isUpdated 
+          ? ["0 1px 3px 0 rgb(0 0 0 / 0.1)", "0 10px 15px -3px rgb(0 0 0 / 0.1)", "0 1px 3px 0 rgb(0 0 0 / 0.1)"]
+          : "0 1px 3px 0 rgb(0 0 0 / 0.1)"
+      }}
+      transition={{ 
+        duration: 0.6,
+        ease: "easeInOut"
+      }}
+      whileHover={{ 
+        scale: 1.02,
+        boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+        transition: { duration: 0.2 }
+      }}
     >
       {/* Nút Edit/Delete */}
       {isOwner && !editing && (
@@ -131,7 +167,7 @@ export default function StickerCard({
           <div className="font-medium break-words whitespace-pre-line text-black">{sticker.content}</div>
           <div className="flex justify-between items-center text-xs mt-1 text-black">
             <div className="flex gap-3">
-              <button
+              <motion.button
                 onClick={handleVote}
                 className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
                   hasVoted 
@@ -140,10 +176,29 @@ export default function StickerCard({
                 }`}
                 title={hasVoted ? 'Bỏ vote' : 'Vote cho sticker này'}
                 disabled={!currentUserEmail}
+                whileTap={{ scale: 0.95 }}
+                animate={hasVoted ? {
+                  scale: [1, 1.1, 1],
+                  backgroundColor: hasVoted ? ["#dbeafe", "#3b82f6", "#dbeafe"] : "#f3f4f6"
+                } : {}}
+                transition={{ duration: 0.3 }}
               >
-                👍 {voteCount}
-              </button>
-              <button
+                <motion.span
+                  animate={{ rotate: hasVoted ? [0, 15, 0] : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  👍
+                </motion.span>
+                <motion.span
+                  key={voteCount} // Re-animate when count changes
+                  initial={{ scale: 1.2, color: "#3b82f6" }}
+                  animate={{ scale: 1, color: hasVoted ? "#3b82f6" : "#6b7280" }}
+                  transition={{ duration: 0.4 }}
+                >
+                  {voteCount}
+                </motion.span>
+              </motion.button>
+              <motion.button
                 onClick={handleCommentToggle}
                 className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
                   showComments 
@@ -151,9 +206,27 @@ export default function StickerCard({
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
                 title={showComments ? 'Ẩn comments' : 'Hiển thị comments'}
+                whileTap={{ scale: 0.95 }}
+                animate={showComments ? {
+                  backgroundColor: ["#dcfce7", "#16a34a", "#dcfce7"]
+                } : {}}
+                transition={{ duration: 0.3 }}
               >
-                💬 {commentCount}
-              </button>
+                <motion.span
+                  animate={{ rotate: showComments ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  💬
+                </motion.span>
+                <motion.span
+                  key={commentCount} // Re-animate when count changes
+                  initial={{ scale: 1.2, color: "#16a34a" }}
+                  animate={{ scale: 1, color: showComments ? "#16a34a" : "#6b7280" }}
+                  transition={{ duration: 0.4 }}
+                >
+                  {commentCount}
+                </motion.span>
+              </motion.button>
             </div>
             <span
               className="truncate max-w-[120px] block text-black cursor-pointer text-right"
@@ -172,6 +245,6 @@ export default function StickerCard({
         onCommentDelete={onCommentDelete}
         isOpen={showComments}
       />
-    </div>
+    </motion.div>
   );
 } 

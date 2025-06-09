@@ -3,10 +3,11 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
-export default async function BoardInvitePage({ params }: { params: { boardId: string } }) {
+export default async function BoardInvitePage({ params }: { params: Promise<{ boardId: string }> }) {
+  const resolvedParams = await params;
   const session = await getServerSession(authOptions);
   if (session?.user) {
-    const boardId = String(params.boardId);
+    const boardId = String(resolvedParams.boardId);
     const email = String(session.user.email);
     // Kiểm tra đã là thành viên chưa
     const existing = await prisma.boardMember.findUnique({
@@ -24,7 +25,7 @@ export default async function BoardInvitePage({ params }: { params: { boardId: s
     }
     redirect(`/boards/${boardId}`);
   } else {
-    redirect(`/auth/signin?inviteBoard=${params.boardId}`);
+    redirect(`/auth/signin?inviteBoard=${resolvedParams.boardId}`);
   }
   return null;
 } 

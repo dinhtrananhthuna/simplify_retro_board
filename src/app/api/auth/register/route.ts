@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       data: { email, name, password: hashedPassword },
     });
     return NextResponse.json({ user });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 } 

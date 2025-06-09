@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppToast } from "@/hooks/useAppToast";
-import { Search, Plus, Trash2, Edit2, Loader2 } from "lucide-react";
+import { Search, Plus, Trash2, Edit2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -51,7 +51,7 @@ export default function DashboardClient() {
       if (!res.ok) throw new Error("Failed to fetch boards");
       const data = await res.json();
       setBoards(data);
-    } catch (e) {
+    } catch {
       toast.error("Failed to load boards");
     } finally {
       setLoading(false);
@@ -60,6 +60,7 @@ export default function DashboardClient() {
 
   useEffect(() => {
     fetchBoards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onCreateBoard = async (data: BoardForm) => {
@@ -78,7 +79,7 @@ export default function DashboardClient() {
       setOpen(false);
       reset();
       fetchBoards();
-    } catch (e) {
+    } catch {
       toast.error("Create board failed");
     }
   };
@@ -100,7 +101,7 @@ export default function DashboardClient() {
       setEditBoard(null);
       reset();
       fetchBoards();
-    } catch (e) {
+    } catch {
       toast.error("Update board failed");
     }
   };
@@ -118,7 +119,7 @@ export default function DashboardClient() {
       }
       toast.success("Board deleted successfully!");
       fetchBoards();
-    } catch (e) {
+    } catch {
       toast.error("Delete board failed");
     }
   };

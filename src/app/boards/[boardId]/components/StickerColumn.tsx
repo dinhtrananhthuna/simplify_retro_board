@@ -1,6 +1,47 @@
 import StickerForm from "./StickerForm";
 import StickerCard from "./StickerCard";
 import { motion, AnimatePresence } from "framer-motion";
+import { Sticker } from "@/types/board";
+
+// Animation variants for stickers
+const stickerVariants = {
+  initial: { 
+    opacity: 0, 
+    scale: 0.8,
+    y: -20,
+    rotateX: -15
+  },
+  animate: { 
+    opacity: 1, 
+    scale: 1,
+    y: 0,
+    rotateX: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 25,
+      duration: 0.5
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    scale: 0.8,
+    y: 20,
+    rotateX: 15,
+    transition: {
+      duration: 0.3,
+      ease: "easeInOut"
+    }
+  }
+};
+
+const containerVariants = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
 export default function StickerColumn({
   type,
@@ -17,7 +58,7 @@ export default function StickerColumn({
 }: {
   type: string;
   label: string;
-  stickers: any[];
+  stickers: Sticker[];
   boardId: string;
   onStickerChanged: () => void;
   onVoteAdd: (stickerId: string) => void;
@@ -37,24 +78,43 @@ export default function StickerColumn({
     >
       <h2 className="font-semibold text-lg mb-2">{label}</h2>
       <StickerForm boardId={boardId} stickerType={type} onCreated={onStickerChanged} />
-      <div className="flex flex-col gap-2 mt-2">
+      <motion.div 
+        className="flex flex-col gap-2 mt-2"
+        variants={containerVariants}
+        animate="animate"
+      >
         {loading ? (
           Array.from({ length: 2 }).map((_, idx) => (
-            <div key={idx} className="bg-gray-200 animate-pulse h-16 rounded" />
+            <motion.div 
+              key={idx} 
+              className="bg-gray-200 animate-pulse h-16 rounded"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.1 }}
+            />
           ))
         ) : (
-          <AnimatePresence initial={false}>
+          <AnimatePresence mode="popLayout">
             {stickers
               .slice()
               .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-              .map((sticker) => (
+              .map((sticker, index) => (
                 <motion.div
                   key={sticker.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
+                  variants={stickerVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
                   layout
+                  custom={index}
+                  whileHover={{ 
+                    scale: 1.02,
+                    transition: { duration: 0.2 }
+                  }}
+                  style={{ 
+                    transformOrigin: "center",
+                    transformStyle: "preserve-3d"
+                  }}
                 >
                   <StickerCard 
                     sticker={sticker} 
@@ -69,7 +129,7 @@ export default function StickerColumn({
               ))}
           </AnimatePresence>
         )}
-      </div>
+      </motion.div>
     </motion.div>
   );
 } 

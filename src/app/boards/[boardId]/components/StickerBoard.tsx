@@ -1,16 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import StickerColumn from "./StickerColumn";
-import StickerForm from "./StickerForm";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
 import { useAppToast } from "@/hooks/useAppToast";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSocket } from "@/hooks/useSocket";
+import { Board, Sticker, PresenceMember } from "@/types/board";
 
 const STICKER_TYPES = [
   { key: "went-well", label: "Went Well" },
@@ -19,12 +17,12 @@ const STICKER_TYPES = [
 ];
 
 export default function StickerBoard({ boardId }: { boardId: string }) {
-  const [board, setBoard] = useState<any>(null);
-  const [stickers, setStickers] = useState<any[]>([]);
+  const [board, setBoard] = useState<Board | null>(null);
+  const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
   const toast = useAppToast?.();
   // State realtime presence
-  const [presenceMembers, setPresenceMembers] = useState<Array<{ email: string; role: string; online: boolean }>>([]);
+  const [presenceMembers, setPresenceMembers] = useState<PresenceMember[]>([]);
 
   const fetchBoard = async () => {
     const res = await fetch(`/api/boards/${boardId}`);
@@ -86,7 +84,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
         // Tìm sticker và xóa vote
         setStickers((prev) => prev.map((sticker) => {
           if (sticker.id === data.stickerId) {
-            return { ...sticker, votes: (sticker.votes || []).filter((vote: any) => vote.email !== data.email) };
+            return { ...sticker, votes: (sticker.votes || []).filter((vote) => vote.email !== data.email) };
           }
           return sticker;
         }));
@@ -115,7 +113,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
           if (sticker.id === data.stickerId) {
             return { 
               ...sticker, 
-              comments: (sticker.comments || []).map((comment: any) => 
+              comments: (sticker.comments || []).map((comment) => 
                 comment.id === data.id ? data : comment
               ) 
             };
@@ -128,7 +126,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
         console.log('Comment deleted:', data);
         // Tìm sticker và xóa comment
         setStickers((prev) => prev.map((sticker) => {
-          const updatedComments = (sticker.comments || []).filter((comment: any) => comment.id !== data.id);
+          const updatedComments = (sticker.comments || []).filter((comment) => comment.id !== data.id);
           if (updatedComments.length !== (sticker.comments || []).length) {
             return { ...sticker, comments: updatedComments };
           }
@@ -144,12 +142,12 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     if (!socketInstance) return;
     console.log('Setting up socket sticker listeners');
     // Khi có sticker mới
-    const handleCreated = (data: any) => {
+    const handleCreated = (data: Sticker) => {
       console.log('Sticker created:', data);
       setStickers((prev) => [...prev, data]);
     };
     // Khi sticker được cập nhật
-    const handleUpdated = (data: any) => {
+    const handleUpdated = (data: Sticker) => {
       console.log('Sticker updated:', data);
       setStickers((prev) => prev.map((s) => s.id === data.id ? data : s));
     };
@@ -187,10 +185,10 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
   const columnStickers = STICKER_TYPES.reduce((acc, col) => {
     acc[col.key] = stickers.filter((s) => s.stickerType === col.key);
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {} as Record<string, Sticker[]>);
 
   // Lấy danh sách thành viên (kết hợp từ board.members và presenceMembers để có đủ role và trạng thái online)
-  const members: { email: string; role: string; online?: boolean }[] = (board.members || []).map((m: any) => {
+  const members: { email: string; role: string; online?: boolean }[] = (board.members || []).map((m) => {
     const presence = presenceMembers.find((p) => p.email === m.email);
     return { ...m, online: presence ? presence.online : false };
   });
@@ -210,7 +208,7 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
         <Link href="/dashboard" className="text-blue-500 hover:underline text-sm">← Back to Boards</Link>
       </div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold">{board.title}</h1>
+        <h1 className="text-2xl font-bold">{board.name}</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <TooltipProvider>
             <div className="flex items-center gap-1">

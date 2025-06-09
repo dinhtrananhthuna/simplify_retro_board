@@ -5,8 +5,9 @@ import { authOptions } from "@/lib/auth";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { boardId: string } }
+  context: { params: Promise<{ boardId: string }> }
 ) {
+  const params = await context.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -47,8 +48,9 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { boardId: string } }
+  context: { params: Promise<{ boardId: string }> }
 ) {
+  const params = await context.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -83,8 +85,9 @@ export async function DELETE(
 
 export async function GET(
   req: Request,
-  { params }: { params: { boardId: string } }
+  context: { params: Promise<{ boardId: string }> }
 ) {
+  const params = await context.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'Board not found' });
     }
 
-    const isMember = board.members.some((member: any) => member.email === session.user?.email) || 
+    const isMember = board.members.some((member: { email: string }) => member.email === session.user?.email) || 
                      board.createdBy === session.user?.email;
     
     if (!isMember) {
@@ -73,8 +73,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
     // Emit socket event nếu có io
-    if (res.socket?.server?.io) {
-      res.socket.server.io.emit('sticker:created', sticker);
+    const socketRes = res.socket as { server?: { io?: { emit: (event: string, data: unknown) => void } } };
+    if (socketRes?.server?.io) {
+      socketRes.server.io.emit('sticker:created', sticker);
     }
     return res.status(200).json(sticker);
   }

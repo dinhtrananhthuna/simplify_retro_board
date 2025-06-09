@@ -9,7 +9,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppToast } from "@/hooks/useAppToast";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -17,11 +18,10 @@ const loginSchema = z.object({
 });
 type LoginForm = z.infer<typeof loginSchema>;
 
-export default function SignInPage() {
+function SignInPageContent() {
   const toast = useAppToast();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const inviteBoard = searchParams.get("inviteBoard");
+  const inviteBoard = searchParams?.get("inviteBoard");
   const [loading, setLoading] = useState(false);
   const {
     register,
@@ -80,7 +80,7 @@ export default function SignInPage() {
             </Button>
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <a
               href={inviteBoard ? `/auth/register?inviteBoard=${inviteBoard}` : "/auth/register"}
               className="text-blue-500 hover:underline"
@@ -91,5 +91,13 @@ export default function SignInPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignInPageContent />
+    </Suspense>
   );
 } 

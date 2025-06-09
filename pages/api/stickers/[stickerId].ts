@@ -1,9 +1,13 @@
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { stickerId } = req.query;
+  if (typeof stickerId !== 'string') {
+    return res.status(400).json({ message: 'Invalid stickerId' });
+  }
   if (req.method === 'PATCH') {
     const session = await getServerSession(req, res, authOptions);
     if (!session?.user?.email) {
@@ -29,8 +33,9 @@ export default async function handler(req, res) {
       },
     });
     // Emit socket event nếu có io
-    if (res.socket?.server?.io) {
-      res.socket.server.io.emit('sticker:updated', updated);
+    const socketRes = res.socket as { server?: { io?: { emit: (event: string, data: unknown) => void } } };
+    if (socketRes?.server?.io) {
+      socketRes.server.io.emit('sticker:updated', updated);
     }
     return res.status(200).json(updated);
   }
@@ -48,8 +53,9 @@ export default async function handler(req, res) {
     }
     await prisma.sticker.delete({ where: { id: stickerId } });
     // Emit socket event nếu có io
-    if (res.socket?.server?.io) {
-      res.socket.server.io.emit('sticker:deleted', { id: stickerId });
+    const socketRes2 = res.socket as { server?: { io?: { emit: (event: string, data: unknown) => void } } };
+    if (socketRes2?.server?.io) {
+      socketRes2.server.io.emit('sticker:deleted', { id: stickerId });
     }
     return res.status(200).json({ message: 'Sticker deleted' });
   }

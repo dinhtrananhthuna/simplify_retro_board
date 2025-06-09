@@ -1,5 +1,4 @@
 import { Server } from "socket.io";
-import { getToken } from "next-auth/jwt";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
