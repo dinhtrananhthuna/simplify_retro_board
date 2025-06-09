@@ -91,10 +91,10 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-slate-900">
       {/* Navigation */}
       <motion.nav 
-        className="fixed top-0 w-full z-50 backdrop-blur-md bg-black/20 border-b border-white/10"
+        className="fixed top-0 w-full z-50 backdrop-blur-md bg-black/40 border-b border-gray-800/50"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6 }}
@@ -121,7 +121,7 @@ export default function HomePage() {
             ) : (
               <div className="flex space-x-3">
                 <Link href="/auth/signin">
-                  <Button variant="ghost" className="text-white hover:bg-white/10">
+                  <Button variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800/50">
                     Sign In
                   </Button>
                 </Link>
@@ -146,7 +146,7 @@ export default function HomePage() {
             className="max-w-4xl mx-auto"
           >
             <motion.div variants={fadeInUp} className="mb-6">
-              <Badge className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-300 border-blue-500/30 mb-4">
+              <Badge className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-blue-300 border-blue-500/20 mb-4">
                 <Building2 className="w-3 h-3 mr-1" />
                 Internal Project - Simplify Dalat
               </Badge>
@@ -154,7 +154,7 @@ export default function HomePage() {
 
             <motion.h1 
               variants={fadeInUp}
-              className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent mb-6"
+              className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gray-100 via-white to-blue-100 bg-clip-text text-transparent mb-6"
             >
               Team Retrospective
               <br />
@@ -163,10 +163,10 @@ export default function HomePage() {
 
             <motion.p 
               variants={fadeInUp}
-              className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed"
+              className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed"
             >
               A modern retrospective tool developed internally by{" "}
-              <span className="text-blue-400 font-semibold">Vu Dinh</span>{" "}
+              <span className="text-blue-400 font-semibold"><a href="mailto:vudinh@simplifydalat.com">Vu Dinh</a></span>{" "}
               to enhance team collaboration efficiency and continuous improvement processes.
             </motion.p>
 
@@ -189,7 +189,7 @@ export default function HomePage() {
                     <Button 
                       variant="outline" 
                       size="lg" 
-                      className="border-white/20 text-white hover:bg-white/10 text-lg px-8 py-6"
+                      className="border-gray-700 text-gray-300 hover:bg-gray-800/50 hover:text-white text-lg px-8 py-6"
                     >
                       Sign In
                     </Button>
@@ -215,7 +215,7 @@ export default function HomePage() {
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           >
-            <ChevronDown className="w-8 h-8 text-white/50 mx-auto" />
+            <ChevronDown className="w-8 h-8 text-gray-600 mx-auto" />
           </motion.div>
         </div>
       </section>
@@ -245,7 +245,7 @@ export default function HomePage() {
                 >
                   {stat.number}
                 </motion.div>
-                <div className="text-gray-400 text-sm md:text-base">{stat.label}</div>
+                <div className="text-gray-500 text-sm md:text-base">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
@@ -262,11 +262,11 @@ export default function HomePage() {
             whileInView="animate"
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-100 mb-6">
               Powerful Features for
               <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"> Modern Teams</span>
             </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
               Designed to optimize retrospective processes and enhance team collaboration workflows
             </p>
           </motion.div>
@@ -280,14 +280,14 @@ export default function HomePage() {
           >
             {features.map((feature, index) => (
               <motion.div key={index} variants={fadeInUp}>
-                <Card className="bg-black/20 border-white/10 backdrop-blur-sm hover:bg-black/30 transition-all duration-300 h-full group">
+                <Card className="bg-black/40 border-gray-800/50 backdrop-blur-sm hover:bg-black/60 transition-all duration-300 h-full group">
                   <CardContent className="p-6">
                     <motion.div 
                       className={`w-12 h-12 rounded-lg bg-gradient-to-r ${feature.color} p-3 mb-4 group-hover:scale-110 transition-transform`}
                     >
                       <feature.icon className="w-full h-full text-white" />
                     </motion.div>
-                    <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
+                    <h3 className="text-xl font-semibold text-gray-100 mb-3">{feature.title}</h3>
                     <p className="text-gray-400 leading-relaxed">{feature.description}</p>
                   </CardContent>
                 </Card>
@@ -301,7 +301,7 @@ export default function HomePage() {
       <section className="py-20 px-6">
         <div className="container mx-auto">
           <motion.div 
-            className="bg-gradient-to-r from-black/40 to-purple-900/20 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-white/10"
+            className="bg-gradient-to-r from-black/60 to-gray-900/40 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-gray-800/50"
             variants={fadeInUp}
             initial="initial"
             whileInView="animate"
@@ -316,11 +316,11 @@ export default function HomePage() {
                 <Building2 className="w-8 h-8 text-white" />
               </motion.div>
               
-              <h3 className="text-3xl md:text-4xl font-bold text-white mb-6">
+              <h3 className="text-3xl md:text-4xl font-bold text-gray-100 mb-6">
                 Developed by Simplify Dalat
               </h3>
               
-              <p className="text-lg text-gray-300 mb-8 leading-relaxed">
+              <p className="text-lg text-gray-400 mb-8 leading-relaxed">
                 An internal project developed by{" "}
                 <span className="text-blue-400 font-semibold"><a href="mailto:vudinh@simplifydalat.com">Vu Dinh</a></span>{" "}
                 with the goal of creating a modern, efficient, and user-friendly retrospective tool for company teams.
@@ -338,7 +338,7 @@ export default function HomePage() {
                   Contact Developer
                 </motion.a>
                 <motion.div
-                  className="inline-flex items-center justify-center px-6 py-3 bg-gray-800 text-gray-300 rounded-lg"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors"
                   whileHover={{ scale: 1.05 }}
                 >
                   <Github className="w-4 h-4 mr-2" />
@@ -351,7 +351,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-white/10">
+      <footer className="py-12 px-6 border-t border-gray-800/50">
         <div className="container mx-auto">
           <motion.div 
             className="flex flex-col md:flex-row items-center justify-between"
@@ -364,10 +364,10 @@ export default function HomePage() {
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <Users className="w-5 h-5 text-white" />
               </div>
-              <span className="text-white font-semibold">Retro Board</span>
+              <span className="text-gray-100 font-semibold">Retro Board</span>
             </div>
             
-            <div className="text-gray-400 text-sm text-center md:text-right">
+            <div className="text-gray-500 text-sm text-center md:text-right">
               <p>© 2025 Simplify Dalat. Made with ❤️ in Dalat</p>
               <p className="mt-1">Developed by <a href="mailto:vudinh@simplifydalat.com">Vu Dinh</a></p>
             </div>
