@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Pencil, Trash2, CheckCircle, XCircle } from "lucide-react";
 import CommentSection from "./CommentSection";
 import { Sticker, Vote } from "@/types/board";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 function truncateEmail(email: string, max = 18) {
   if (!email) return "";
