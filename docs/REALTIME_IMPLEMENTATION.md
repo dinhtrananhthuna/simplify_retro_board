@@ -62,8 +62,8 @@ interface ClientToServerEvents {
 
 ### Phase 2: Server Implementation (2 ngày)
 - [x] Implement socket server với authentication
-- [ ] Xử lý presence events (join/leave)
-- [ ] Xử lý sticker events (create/update/delete/move)
+- [x] Xử lý presence events (join/leave)
+- [x] Xử lý sticker events (create/update/delete/move)
 - [ ] Xử lý vote events
 - [ ] Xử lý comment events
 - [ ] Implement error handling và logging

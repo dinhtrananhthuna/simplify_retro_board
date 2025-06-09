@@ -40,6 +40,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const stickers = await prisma.sticker.findMany({
       where: { boardId: boardId },
+      include: {
+        votes: true,
+        comments: true,
+      },
       orderBy: { createdAt: 'asc' },
     });
     return res.status(200).json(stickers);

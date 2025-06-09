@@ -68,6 +68,111 @@ export default async function handler(req, res) {
         }
       });
 
+      // vote:add
+      socket.on("vote:add", async ({ stickerId }) => {
+        const email = socket.data.email;
+        if (!email) {
+          socket.emit("error", { message: "Email is required." });
+          return;
+        }
+
+        try {
+          // Kiểm tra sticker có tồn tại không
+          const sticker = await prisma.sticker.findUnique({
+            where: { id: stickerId },
+            include: { board: true }
+          });
+          
+          if (!sticker) {
+            socket.emit("error", { message: "Sticker not found." });
+            return;
+          }
+
+          // Kiểm tra quyền truy cập board
+          const member = await prisma.boardMember.findUnique({
+            where: { boardId_email: { boardId: sticker.boardId, email } },
+          });
+          if (!member && sticker.board.createdBy !== email) {
+            socket.emit("error", { message: "Unauthorized." });
+            return;
+          }
+
+          // Kiểm tra đã vote chưa
+          const existingVote = await prisma.vote.findUnique({
+            where: { stickerId_email: { stickerId, email } },
+          });
+          if (existingVote) {
+            socket.emit("error", { message: "Already voted." });
+            return;
+          }
+
+          // Tạo vote
+          await prisma.vote.create({
+            data: { stickerId, email },
+          });
+
+          // Emit cho tất cả members trong board
+          socket.to(sticker.boardId).emit("vote:added", { stickerId, email });
+          socket.emit("vote:added", { stickerId, email }); // Emit cho chính user này
+          console.log(`[Socket] Vote added by ${email} for sticker: ${stickerId}`);
+        } catch (error) {
+          console.error(`[Socket] Error adding vote:`, error);
+          socket.emit("error", { message: "Failed to add vote." });
+        }
+      });
+
+      // vote:remove
+      socket.on("vote:remove", async ({ stickerId }) => {
+        const email = socket.data.email;
+        if (!email) {
+          socket.emit("error", { message: "Email is required." });
+          return;
+        }
+
+        try {
+          // Kiểm tra sticker có tồn tại không
+          const sticker = await prisma.sticker.findUnique({
+            where: { id: stickerId },
+            include: { board: true }
+          });
+          
+          if (!sticker) {
+            socket.emit("error", { message: "Sticker not found." });
+            return;
+          }
+
+          // Kiểm tra quyền truy cập board
+          const member = await prisma.boardMember.findUnique({
+            where: { boardId_email: { boardId: sticker.boardId, email } },
+          });
+          if (!member && sticker.board.createdBy !== email) {
+            socket.emit("error", { message: "Unauthorized." });
+            return;
+          }
+
+          // Tìm và xóa vote
+          const vote = await prisma.vote.findUnique({
+            where: { stickerId_email: { stickerId, email } },
+          });
+          if (!vote) {
+            socket.emit("error", { message: "Vote not found." });
+            return;
+          }
+
+          await prisma.vote.delete({
+            where: { id: vote.id },
+          });
+
+          // Emit cho tất cả members trong board
+          socket.to(sticker.boardId).emit("vote:removed", { stickerId, email });
+          socket.emit("vote:removed", { stickerId, email }); // Emit cho chính user này
+          console.log(`[Socket] Vote removed by ${email} for sticker: ${stickerId}`);
+        } catch (error) {
+          console.error(`[Socket] Error removing vote:`, error);
+          socket.emit("error", { message: "Failed to remove vote." });
+        }
+      });
+
       // disconnect
       socket.on("disconnect", () => {
         const email = socket.data.email;

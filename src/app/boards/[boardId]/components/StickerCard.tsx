@@ -7,16 +7,31 @@ function truncateEmail(email: string, max = 18) {
   return email.length > max ? email.slice(0, max) + "..." : email;
 }
 
-export default function StickerCard({ sticker, onChanged }: { sticker: any, onChanged: () => void }) {
+export default function StickerCard({ 
+  sticker, 
+  onChanged, 
+  onVoteAdd, 
+  onVoteRemove 
+}: { 
+  sticker: any;
+  onChanged: () => void;
+  onVoteAdd: (stickerId: string) => void;
+  onVoteRemove: (stickerId: string) => void;
+}) {
   const { data: session } = useSession();
   const isOwner = session?.user?.email === sticker.createdBy;
   const [editing, setEditing] = useState(false);
   const [content, setContent] = useState(sticker.content);
   const [loading, setLoading] = useState(false);
 
-  // Giả lập số vote/comment (cần fetch thực tế nếu có API)
-  const voteCount = sticker.votes?.length ?? 0;
+  // Thông tin vote/comment từ sticker data
+  const votes = sticker.votes || [];
+  const voteCount = votes.length;
   const commentCount = sticker.comments?.length ?? 0;
+  
+  // Kiểm tra user hiện tại đã vote chưa
+  const currentUserEmail = session?.user?.email;
+  const hasVoted = votes.some((vote: any) => vote.email === currentUserEmail);
 
   const handleDelete = async () => {
     if (!confirm("Bạn có chắc muốn xóa sticker này?")) return;
@@ -37,6 +52,16 @@ export default function StickerCard({ sticker, onChanged }: { sticker: any, onCh
     setLoading(false);
     setEditing(false);
     onChanged();
+  };
+
+  const handleVote = () => {
+    if (!currentUserEmail) return;
+    
+    if (hasVoted) {
+      onVoteRemove(sticker.id);
+    } else {
+      onVoteAdd(sticker.id);
+    }
   };
 
   return (
@@ -88,7 +113,18 @@ export default function StickerCard({ sticker, onChanged }: { sticker: any, onCh
           <div className="font-medium break-words whitespace-pre-line text-black">{sticker.content}</div>
           <div className="flex justify-between items-center text-xs mt-1 text-black">
             <div className="flex gap-3">
-              <span className="flex items-center gap-1">👍 {voteCount}</span>
+              <button
+                onClick={handleVote}
+                className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
+                  hasVoted 
+                    ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+                title={hasVoted ? 'Bỏ vote' : 'Vote cho sticker này'}
+                disabled={!currentUserEmail}
+              >
+                👍 {voteCount}
+              </button>
               <span className="flex items-center gap-1">💬 {commentCount}</span>
             </div>
             <span

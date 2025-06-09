@@ -8,6 +8,8 @@ export default function StickerColumn({
   stickers,
   boardId,
   onStickerChanged,
+  onVoteAdd,
+  onVoteRemove,
   loading = false,
 }: {
   type: string;
@@ -15,6 +17,8 @@ export default function StickerColumn({
   stickers: any[];
   boardId: string;
   onStickerChanged: () => void;
+  onVoteAdd: (stickerId: string) => void;
+  onVoteRemove: (stickerId: string) => void;
   loading?: boolean;
 }) {
   return (
@@ -46,7 +50,12 @@ export default function StickerColumn({
                   transition={{ duration: 0.2 }}
                   layout
                 >
-                  <StickerCard sticker={sticker} onChanged={onStickerChanged} />
+                  <StickerCard 
+                    sticker={sticker} 
+                    onChanged={onStickerChanged}
+                    onVoteAdd={onVoteAdd}
+                    onVoteRemove={onVoteRemove}
+                  />
                 </motion.div>
               ))}
           </AnimatePresence>

@@ -9,6 +9,8 @@ interface UseSocketOptions {
   onPresenceList?: (data: { members: Array<{ email: string; role: string; online: boolean }> }) => void;
   onPresenceJoined?: (data: { email: string; role: string }) => void;
   onPresenceLeft?: (data: { email: string }) => void;
+  onVoteAdded?: (data: { stickerId: string; email: string }) => void;
+  onVoteRemoved?: (data: { stickerId: string; email: string }) => void;
 }
 
 export function useSocket(
@@ -17,6 +19,18 @@ export function useSocket(
 ) {
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
   const { data: session } = useSession();
+
+  const voteAdd = (stickerId: string) => {
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('vote:add', { stickerId });
+    }
+  };
+
+  const voteRemove = (stickerId: string) => {
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('vote:remove', { stickerId });
+    }
+  };
 
   useEffect(() => {
     if (!boardId || !session?.user?.email) {
@@ -81,6 +95,14 @@ export function useSocket(
       socket.on('presence:left', options.onPresenceLeft);
     }
 
+    // Lắng nghe các event vote
+    if (options?.onVoteAdded) {
+      socket.on('vote:added', options.onVoteAdded);
+    }
+    if (options?.onVoteRemoved) {
+      socket.on('vote:removed', options.onVoteRemoved);
+    }
+
     // Rời board khi unmount
     return () => {
       console.log(`[useSocket] Cleaning up socket for board: ${boardId}`);
@@ -94,6 +116,12 @@ export function useSocket(
       if (options?.onPresenceLeft) {
         socket.off('presence:left', options.onPresenceLeft);
       }
+      if (options?.onVoteAdded) {
+        socket.off('vote:added', options.onVoteAdded);
+      }
+      if (options?.onVoteRemoved) {
+        socket.off('vote:removed', options.onVoteRemoved);
+      }
       socket.off('connect');
       socket.off('disconnect');
       socket.off('connect_error');
@@ -104,5 +132,9 @@ export function useSocket(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId, session?.user?.email]);
 
-  return socketRef.current;
+  return {
+    socket: socketRef.current,
+    voteAdd,
+    voteRemove,
+  };
 } 

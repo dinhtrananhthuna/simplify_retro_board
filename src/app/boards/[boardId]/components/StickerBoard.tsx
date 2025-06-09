@@ -44,8 +44,8 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     // eslint-disable-next-line
   }, [boardId]);
 
-  // --- SOCKET REALTIME với PRESENCE ---
-  const socket = useSocket(
+  // --- SOCKET REALTIME với PRESENCE và VOTE ---
+  const { socket, voteAdd, voteRemove } = useSocket(
     boardId,
     {
       onPresenceList: (data) => {
@@ -68,6 +68,29 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
         console.log('Member left:', data);
         setPresenceMembers((prev) => prev.map((m) => m.email === data.email ? { ...m, online: false } : m));
         if (toast) toast.info(`${data.email} vừa rời board!`);
+      },
+      onVoteAdded: (data) => {
+        console.log('Vote added:', data);
+        // Tìm sticker và thêm vote mới
+        setStickers((prev) => prev.map((sticker) => {
+          if (sticker.id === data.stickerId) {
+            const newVote = { id: `temp-${Date.now()}`, stickerId: data.stickerId, email: data.email, createdAt: new Date() };
+            return { ...sticker, votes: [...(sticker.votes || []), newVote] };
+          }
+          return sticker;
+        }));
+        if (toast) toast.success(`${data.email} đã vote cho sticker!`);
+      },
+      onVoteRemoved: (data) => {
+        console.log('Vote removed:', data);
+        // Tìm sticker và xóa vote
+        setStickers((prev) => prev.map((sticker) => {
+          if (sticker.id === data.stickerId) {
+            return { ...sticker, votes: (sticker.votes || []).filter((vote: any) => vote.email !== data.email) };
+          }
+          return sticker;
+        }));
+        if (toast) toast.info(`${data.email} đã bỏ vote cho sticker!`);
       },
     }
   );
@@ -226,6 +249,8 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
             stickers={columnStickers[col.key]}
             boardId={boardId}
             onStickerChanged={handleStickerChanged}
+            onVoteAdd={voteAdd}
+            onVoteRemove={voteRemove}
             loading={loading}
           />
         ))}
