@@ -10,6 +10,9 @@ export default function StickerColumn({
   onStickerChanged,
   onVoteAdd,
   onVoteRemove,
+  onCommentAdd,
+  onCommentUpdate,
+  onCommentDelete,
   loading = false,
 }: {
   type: string;
@@ -19,6 +22,9 @@ export default function StickerColumn({
   onStickerChanged: () => void;
   onVoteAdd: (stickerId: string) => void;
   onVoteRemove: (stickerId: string) => void;
+  onCommentAdd: (stickerId: string, content: string) => void;
+  onCommentUpdate: (commentId: string, content: string) => void;
+  onCommentDelete: (commentId: string) => void;
   loading?: boolean;
 }) {
   return (
@@ -55,6 +61,9 @@ export default function StickerColumn({
                     onChanged={onStickerChanged}
                     onVoteAdd={onVoteAdd}
                     onVoteRemove={onVoteRemove}
+                    onCommentAdd={onCommentAdd}
+                    onCommentUpdate={onCommentUpdate}
+                    onCommentDelete={onCommentDelete}
                   />
                 </motion.div>
               ))}

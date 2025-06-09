@@ -1,6 +1,7 @@
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { Pencil, Trash2, CheckCircle, XCircle } from "lucide-react";
+import CommentSection from "./CommentSection";
 
 function truncateEmail(email: string, max = 18) {
   if (!email) return "";
@@ -11,23 +12,31 @@ export default function StickerCard({
   sticker, 
   onChanged, 
   onVoteAdd, 
-  onVoteRemove 
+  onVoteRemove,
+  onCommentAdd,
+  onCommentUpdate,
+  onCommentDelete
 }: { 
   sticker: any;
   onChanged: () => void;
   onVoteAdd: (stickerId: string) => void;
   onVoteRemove: (stickerId: string) => void;
+  onCommentAdd: (stickerId: string, content: string) => void;
+  onCommentUpdate: (commentId: string, content: string) => void;
+  onCommentDelete: (commentId: string) => void;
 }) {
   const { data: session } = useSession();
   const isOwner = session?.user?.email === sticker.createdBy;
   const [editing, setEditing] = useState(false);
   const [content, setContent] = useState(sticker.content);
   const [loading, setLoading] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   // Thông tin vote/comment từ sticker data
   const votes = sticker.votes || [];
   const voteCount = votes.length;
-  const commentCount = sticker.comments?.length ?? 0;
+  const comments = sticker.comments || [];
+  const commentCount = comments.length;
   
   // Kiểm tra user hiện tại đã vote chưa
   const currentUserEmail = session?.user?.email;
@@ -62,6 +71,14 @@ export default function StickerCard({
     } else {
       onVoteAdd(sticker.id);
     }
+  };
+
+  const handleCommentToggle = () => {
+    setShowComments(!showComments);
+  };
+
+  const handleCommentAdd = (content: string) => {
+    onCommentAdd(sticker.id, content);
   };
 
   return (
@@ -125,7 +142,17 @@ export default function StickerCard({
               >
                 👍 {voteCount}
               </button>
-              <span className="flex items-center gap-1">💬 {commentCount}</span>
+              <button
+                onClick={handleCommentToggle}
+                className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
+                  showComments 
+                    ? 'bg-green-100 text-green-600 hover:bg-green-200' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+                title={showComments ? 'Ẩn comments' : 'Hiển thị comments'}
+              >
+                💬 {commentCount}
+              </button>
             </div>
             <span
               className="truncate max-w-[120px] block text-black cursor-pointer text-right"
@@ -136,6 +163,14 @@ export default function StickerCard({
           </div>
         </>
       )}
+      
+      <CommentSection
+        comments={comments}
+        onCommentAdd={handleCommentAdd}
+        onCommentUpdate={onCommentUpdate}
+        onCommentDelete={onCommentDelete}
+        isOpen={showComments}
+      />
     </div>
   );
 } 
