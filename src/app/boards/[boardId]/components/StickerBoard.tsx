@@ -44,8 +44,8 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     // eslint-disable-next-line
   }, [boardId]);
 
-  // --- SOCKET REALTIME với PRESENCE và VOTE ---
-  const { socket, voteAdd, voteRemove } = useSocket(
+  // --- SOCKET REALTIME với PRESENCE, VOTE và COMMENT ---
+  const { socket: socketInstance, voteAdd, voteRemove, commentAdd, commentUpdate, commentDelete } = useSocket(
     boardId,
     {
       onPresenceList: (data) => {
@@ -92,12 +92,56 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
         }));
         if (toast) toast.info(`${data.email} đã bỏ vote cho sticker!`);
       },
+      onCommentAdded: (data) => {
+        console.log('[StickerBoard] Comment added event received:', data);
+        // Tìm sticker và thêm comment mới
+        setStickers((prev) => {
+          const updated = prev.map((sticker) => {
+            if (sticker.id === data.stickerId) {
+              console.log('[StickerBoard] Adding comment to sticker:', sticker.id);
+              return { ...sticker, comments: [...(sticker.comments || []), data] };
+            }
+            return sticker;
+          });
+          console.log('[StickerBoard] Updated stickers after comment add:', updated);
+          return updated;
+        });
+        if (toast) toast.success(`${data.email} đã thêm comment!`);
+      },
+      onCommentUpdated: (data) => {
+        console.log('Comment updated:', data);
+        // Tìm sticker và update comment
+        setStickers((prev) => prev.map((sticker) => {
+          if (sticker.id === data.stickerId) {
+            return { 
+              ...sticker, 
+              comments: (sticker.comments || []).map((comment: any) => 
+                comment.id === data.id ? data : comment
+              ) 
+            };
+          }
+          return sticker;
+        }));
+        if (toast) toast.info(`${data.email} đã cập nhật comment!`);
+      },
+      onCommentDeleted: (data) => {
+        console.log('Comment deleted:', data);
+        // Tìm sticker và xóa comment
+        setStickers((prev) => prev.map((sticker) => {
+          const updatedComments = (sticker.comments || []).filter((comment: any) => comment.id !== data.id);
+          if (updatedComments.length !== (sticker.comments || []).length) {
+            return { ...sticker, comments: updatedComments };
+          }
+          return sticker;
+        }));
+        if (toast) toast.info(`Comment đã được xóa!`);
+      },
     }
   );
 
   // --- SOCKET REALTIME STICKERS ---
   useEffect(() => {
-    if (!socket) return;
+    if (!socketInstance) return;
     console.log('Setting up socket sticker listeners');
     // Khi có sticker mới
     const handleCreated = (data: any) => {
@@ -114,15 +158,15 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
       console.log('Sticker deleted:', data);
       setStickers((prev) => prev.filter((s) => s.id !== data.id));
     };
-    socket.on("sticker:created", handleCreated);
-    socket.on("sticker:updated", handleUpdated);
-    socket.on("sticker:deleted", handleDeleted);
+    socketInstance.on("sticker:created", handleCreated);
+    socketInstance.on("sticker:updated", handleUpdated);
+    socketInstance.on("sticker:deleted", handleDeleted);
     return () => {
-      socket.off("sticker:created", handleCreated);
-      socket.off("sticker:updated", handleUpdated);
-      socket.off("sticker:deleted", handleDeleted);
+      socketInstance.off("sticker:created", handleCreated);
+      socketInstance.off("sticker:updated", handleUpdated);
+      socketInstance.off("sticker:deleted", handleDeleted);
     };
-  }, [socket]);
+  }, [socketInstance]);
 
   // --- OVERRIDE handleStickerChanged để emit socket ---
   const handleStickerChanged = () => {
@@ -251,6 +295,9 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
             onStickerChanged={handleStickerChanged}
             onVoteAdd={voteAdd}
             onVoteRemove={voteRemove}
+            onCommentAdd={commentAdd}
+            onCommentUpdate={commentUpdate}
+            onCommentDelete={commentDelete}
             loading={loading}
           />
         ))}

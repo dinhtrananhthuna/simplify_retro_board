@@ -60,13 +60,15 @@ export default function CommentSection({
     e.preventDefault();
     if (!newComment.trim()) return;
     
+    console.log("[CommentSection] Adding comment:", newComment.trim());
     setLoading(true);
     try {
       await onCommentAdd(newComment.trim());
+      console.log("[CommentSection] Comment add request sent");
       setNewComment("");
       setIsAddingComment(false);
     } catch (error) {
-      console.error("Failed to add comment:", error);
+      console.error("[CommentSection] Failed to add comment:", error);
     } finally {
       setLoading(false);
     }

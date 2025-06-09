@@ -78,6 +78,7 @@ export default function StickerCard({
   };
 
   const handleCommentAdd = (content: string) => {
+    console.log("[StickerCard] Adding comment to sticker:", sticker.id, "content:", content);
     onCommentAdd(sticker.id, content);
   };
 

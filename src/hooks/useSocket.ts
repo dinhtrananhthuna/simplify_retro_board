@@ -38,8 +38,12 @@ export function useSocket(
   };
 
   const commentAdd = (stickerId: string, content: string) => {
+    console.log("[useSocket] commentAdd called:", { stickerId, content, connected: socketRef.current?.connected });
     if (socketRef.current?.connected && content.trim()) {
+      console.log("[useSocket] Emitting comment:add event");
       socketRef.current.emit('comment:add', { stickerId, content: content.trim() });
+    } else {
+      console.warn("[useSocket] Cannot emit comment:add - socket not connected or content empty");
     }
   };
 
@@ -106,6 +110,8 @@ export function useSocket(
     socket.on('connect_error', (error: any) => {
       console.error(`[useSocket] Socket connection error:`, error);
     });
+
+
 
     // Lắng nghe các event presence
     if (options?.onPresenceList) {
