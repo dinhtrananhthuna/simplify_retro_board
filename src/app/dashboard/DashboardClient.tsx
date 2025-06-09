@@ -24,6 +24,21 @@ type Board = {
   createdAt: string;
 };
 
+const fadeInUp = {
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6 }
+};
+
+const staggerContainer = {
+  initial: {},
+  animate: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
 export default function DashboardClient() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -134,29 +149,51 @@ export default function DashboardClient() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-4">
-      <div className="flex flex-col gap-6 mb-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">My Retrospective Boards</h1>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button variant="default" className="gap-2">
-                <Plus className="w-4 h-4" /> New Board
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
+    <div className="container mx-auto px-6 py-10 pt-24">
+          <motion.div
+            variants={fadeInUp}
+            initial="initial"
+            animate="animate"
+            className="max-w-6xl mx-auto"
+          >
+            {/* Header */}
+            <div className="flex flex-col gap-6 mb-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-100 via-white to-blue-100 bg-clip-text text-transparent mb-2">
+                    My Retrospective Boards
+                  </h1>
+                  <p className="text-gray-400">
+                    Create and manage your team retrospective boards
+                  </p>
+                </div>
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white gap-2">
+                      <Plus className="w-4 h-4" /> New Board
+                    </Button>
+                  </DialogTrigger>
+            <DialogContent className="bg-black/90 border-gray-800/50 backdrop-blur-sm">
               <DialogHeader>
-                <DialogTitle>Create New Board</DialogTitle>
+                <DialogTitle className="text-gray-100">Create New Board</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit(onCreateBoard)} className="space-y-4">
                 <div>
-                  <Label htmlFor="title">Board Title</Label>
-                  <Input id="title" {...register("title")} />
+                  <Label htmlFor="title" className="text-gray-300">Board Title</Label>
+                  <Input 
+                    id="title" 
+                    {...register("title")} 
+                    className="bg-gray-800/50 border-gray-700 text-gray-100"
+                  />
                   <div className="min-h-[24px]">
-                    {errors.title && <span className="text-red-500 text-sm">{errors.title.message}</span>}
+                    {errors.title && <span className="text-red-400 text-sm">{errors.title.message}</span>}
                   </div>
                 </div>
-                <Button type="submit" disabled={isSubmitting} className="w-full">
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white w-full"
+                >
                   {isSubmitting ? "Creating..." : "Create Board"}
                 </Button>
               </form>
@@ -164,131 +201,153 @@ export default function DashboardClient() {
           </Dialog>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search boards..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-6 bg-muted rounded w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <div className="h-4 bg-muted rounded w-1/2 mb-4" />
-                <div className="flex gap-2">
-                  <div className="h-8 bg-muted rounded w-16" />
-                  <div className="h-8 bg-muted rounded w-16" />
-                  <div className="h-8 bg-muted rounded w-16" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : filteredBoards.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-20"
-        >
-          <div className="text-6xl mb-4">📋</div>
-          <h3 className="text-xl font-semibold mb-2">No boards found</h3>
-          <p className="text-muted-foreground">
-            {searchQuery
-              ? "No boards match your search. Try a different search term."
-              : "Create your first retrospective board to get started!"}
-          </p>
-          {!searchQuery && (
-            <Button
-              variant="outline"
-              className="mt-4 gap-2"
-              onClick={() => setOpen(true)}
-            >
-              <Plus className="w-4 h-4" /> Create New Board
-            </Button>
-          )}
-        </motion.div>
-      ) : (
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            layout
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
-          >
-            {filteredBoards.map((board) => (
-              <motion.div
-                key={board.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Card className="hover:shadow-lg transition-all duration-200">
-                  <CardHeader>
-                    <CardTitle className="truncate">{board.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-xs text-muted-foreground mb-4">
-                      Created: {new Date(board.createdAt).toLocaleString()}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => router.push(`/boards/${board.id}`)}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleEditClick(board)}
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => onDeleteBoard(board.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
-      )}
-
-      <Dialog open={!!editBoard} onOpenChange={() => setEditBoard(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Board</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onEditBoard)} className="space-y-4">
-            <div>
-              <Label htmlFor="edit-title">Board Title</Label>
-              <Input id="edit-title" {...register("title")} />
-              <div className="min-h-[24px]">
-                {errors.title && <span className="text-red-500 text-sm">{errors.title.message}</span>}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                <Input
+                  placeholder="Search boards..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-gray-800/30 border-gray-700 text-gray-100 placeholder:text-gray-500"
+                />
               </div>
             </div>
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
+
+            {loading ? (
+              <motion.div
+                variants={staggerContainer}
+                initial="initial"
+                animate="animate"
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+              >
+                {[...Array(6)].map((_, i) => (
+                  <motion.div key={i} variants={fadeInUp}>
+                    <Card className="bg-black/40 border-gray-800/50 backdrop-blur-sm animate-pulse">
+                      <CardHeader>
+                        <div className="h-6 bg-gray-700/50 rounded w-3/4" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-4 bg-gray-700/50 rounded w-1/2 mb-4" />
+                        <div className="flex gap-2">
+                          <div className="h-8 bg-gray-700/50 rounded w-16" />
+                          <div className="h-8 bg-gray-700/50 rounded w-16" />
+                          <div className="h-8 bg-gray-700/50 rounded w-16" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : filteredBoards.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-20"
+              >
+                <div className="text-6xl mb-4">📋</div>
+                <h3 className="text-xl font-semibold text-gray-100 mb-2">No boards found</h3>
+                <p className="text-gray-400">
+                  {searchQuery
+                    ? "No boards match your search. Try a different search term."
+                    : "Create your first retrospective board to get started!"}
+                </p>
+                {!searchQuery && (
+                  <Button
+                    variant="outline"
+                    className="mt-4 gap-2 border-gray-700 text-gray-300 hover:bg-gray-800/50"
+                    onClick={() => setOpen(true)}
+                  >
+                    <Plus className="w-4 h-4" /> Create New Board
+                  </Button>
+                )}
+              </motion.div>
+            ) : (
+              <AnimatePresence mode="popLayout">
+                <motion.div
+                  layout
+                  variants={staggerContainer}
+                  initial="initial"
+                  animate="animate"
+                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+                >
+                  {filteredBoards.map((board) => (
+                    <motion.div
+                      key={board.id}
+                      layout
+                      variants={fadeInUp}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Card className="bg-black/40 border-gray-800/50 backdrop-blur-sm hover:bg-black/60 hover:shadow-lg transition-all duration-200 group">
+                        <CardHeader>
+                          <CardTitle className="truncate text-gray-100">{board.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-xs text-gray-400 mb-4">
+                            Created: {new Date(board.createdAt).toLocaleString()}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                              onClick={() => router.push(`/boards/${board.id}`)}
+                            >
+                              View
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-gray-700 text-gray-300 hover:bg-gray-800/50"
+                              onClick={() => handleEditClick(board)}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="bg-red-600/80 hover:bg-red-600"
+                              onClick={() => onDeleteBoard(board.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+            )}
+
+            <Dialog open={!!editBoard} onOpenChange={() => setEditBoard(null)}>
+              <DialogContent className="bg-black/90 border-gray-800/50 backdrop-blur-sm">
+                <DialogHeader>
+                  <DialogTitle className="text-gray-100">Edit Board</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit(onEditBoard)} className="space-y-4">
+                  <div>
+                    <Label htmlFor="edit-title" className="text-gray-300">Board Title</Label>
+                    <Input 
+                      id="edit-title" 
+                      {...register("title")} 
+                      className="bg-gray-800/50 border-gray-700 text-gray-100"
+                    />
+                    <div className="min-h-[24px]">
+                      {errors.title && <span className="text-red-400 text-sm">{errors.title.message}</span>}
+                    </div>
+                  </div>
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting} 
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white w-full"
+                  >
+                    {isSubmitting ? "Saving..." : "Save Changes"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </motion.div>
+        </div>
   );
 } 
