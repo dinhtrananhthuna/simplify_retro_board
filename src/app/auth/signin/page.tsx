@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppToast } from "@/hooks/useAppToast";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import Link from "next/link";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -22,7 +23,24 @@ function SignInPageContent() {
   const toast = useAppToast();
   const searchParams = useSearchParams();
   const inviteBoard = searchParams?.get("inviteBoard");
+  const callbackUrl = searchParams?.get("callbackUrl");
   const [loading, setLoading] = useState(false);
+  
+  // Extract boardId từ callbackUrl nếu có (format: /boards/{boardId}/invite)
+  let extractedBoardId = inviteBoard;
+  if (!extractedBoardId && callbackUrl) {
+    const decodedCallbackUrl = decodeURIComponent(callbackUrl);
+    const boardIdMatch = decodedCallbackUrl.match(/\/boards\/([^\/]+)\/invite/);
+    if (boardIdMatch) {
+      extractedBoardId = boardIdMatch[1];
+    }
+  }
+  
+  console.log("[SignIn] inviteBoard parameter:", inviteBoard);
+  console.log("[SignIn] callbackUrl:", callbackUrl);
+  console.log("[SignIn] decoded callbackUrl:", callbackUrl ? decodeURIComponent(callbackUrl) : null);
+  console.log("[SignIn] extractedBoardId:", extractedBoardId);
+  
   const {
     register,
     handleSubmit,
@@ -40,8 +58,12 @@ function SignInPageContent() {
     if (res?.error) toast.error("Invalid email or password");
     else if (res?.ok) {
       toast.success("Login successful!");
-      if (inviteBoard) {
-        window.location.href = `/boards/${inviteBoard}/invite`;
+      if (extractedBoardId) {
+        console.log("[SignIn] Redirecting to invite board:", extractedBoardId);
+        window.location.href = `/boards/${extractedBoardId}/invite`;
+      } else if (callbackUrl) {
+        console.log("[SignIn] Redirecting to callbackUrl:", callbackUrl);
+        window.location.href = decodeURIComponent(callbackUrl);
       } else {
         window.location.href = "/dashboard";
       }
@@ -49,11 +71,23 @@ function SignInPageContent() {
     setLoading(false);
   };
 
+  // Tạo register URL - ưu tiên inviteBoard param, fallback to extracted boardId
+  const registerUrl = (inviteBoard || extractedBoardId)
+    ? `/auth/register?inviteBoard=${inviteBoard || extractedBoardId}` 
+    : "/auth/register";
+  
+  console.log("[SignIn] Register URL:", registerUrl);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-[400px]">
         <CardHeader>
           <CardTitle className="text-center">Sign In</CardTitle>
+          {(inviteBoard || extractedBoardId) && (
+            <p className="text-center text-sm text-muted-foreground">
+              Bạn được mời tham gia board
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -81,12 +115,12 @@ function SignInPageContent() {
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
-            <a
-              href={inviteBoard ? `/auth/register?inviteBoard=${inviteBoard}` : "/auth/register"}
+            <Link
+              href={registerUrl}
               className="text-blue-500 hover:underline"
             >
               Register
-            </a>
+            </Link>
           </div>
         </CardContent>
       </Card>

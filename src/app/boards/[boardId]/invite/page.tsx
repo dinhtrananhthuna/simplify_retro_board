@@ -25,7 +25,9 @@ export default async function BoardInvitePage({ params }: { params: Promise<{ bo
     }
     redirect(`/boards/${boardId}`);
   } else {
-    redirect(`/auth/signin?inviteBoard=${resolvedParams.boardId}`);
+    // Sử dụng callbackUrl để NextAuth redirect về đúng trang sau khi login
+    const callbackUrl = encodeURIComponent(`/boards/${resolvedParams.boardId}/invite`);
+    redirect(`/auth/signin?callbackUrl=${callbackUrl}`);
   }
   return null;
 } 

@@ -10,6 +10,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useAppToast } from "@/hooks/useAppToast";
+import Link from "next/link";
 
 const passwordPolicy =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -34,6 +35,9 @@ function RegisterPageContent() {
   const inviteBoard = searchParams?.get("inviteBoard");
   const toast = useAppToast();
   const [loading, setLoading] = useState(false);
+  
+  console.log("[Register] inviteBoard parameter:", inviteBoard);
+  
   const {
     register,
     handleSubmit,
@@ -52,6 +56,7 @@ function RegisterPageContent() {
     if (res.ok) {
       toast.success("Register successfully! Please sign in.");
       if (inviteBoard) {
+        console.log("[Register] Redirecting to signin with inviteBoard:", inviteBoard);
         router.push(`/auth/signin?inviteBoard=${inviteBoard}`);
       } else {
         router.push("/auth/signin");
@@ -63,11 +68,23 @@ function RegisterPageContent() {
     setLoading(false);
   };
 
+  // Tạo signin URL với debugging
+  const signinUrl = inviteBoard 
+    ? `/auth/signin?inviteBoard=${inviteBoard}` 
+    : "/auth/signin";
+  
+  console.log("[Register] Signin URL:", signinUrl);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-[400px]">
         <CardHeader>
           <CardTitle className="text-center">Register</CardTitle>
+          {inviteBoard && (
+            <p className="text-center text-sm text-muted-foreground">
+              Tạo tài khoản để tham gia board
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -104,12 +121,12 @@ function RegisterPageContent() {
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <a
-              href={inviteBoard ? `/auth/signin?inviteBoard=${inviteBoard}` : "/auth/signin"}
+            <Link
+              href={signinUrl}
               className="text-blue-500 hover:underline"
             >
               Sign In
-            </a>
+            </Link>
           </div>
         </CardContent>
       </Card>
