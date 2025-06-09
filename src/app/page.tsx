@@ -38,37 +38,37 @@ const features = [
   {
     icon: Users,
     title: "Team Collaboration",
-    description: "Tạo không gian an toàn cho team thảo luận và chia sẻ feedback một cách hiệu quả.",
+    description: "Create a safe space for teams to discuss and share feedback effectively in retrospective sessions.",
     color: "from-blue-500 to-cyan-500"
   },
   {
     icon: MessageSquare,
     title: "Real-time Comments",
-    description: "Tương tác real-time với comments, votes và reactions để có cuộc thảo luận sống động.",
+    description: "Engage in real-time interactions with comments, votes, and reactions for dynamic discussions.",
     color: "from-purple-500 to-pink-500"
   },
   {
     icon: TrendingUp,
     title: "Continuous Improvement",
-    description: "Theo dõi progress và action items để đảm bảo team liên tục cải thiện quy trình làm việc.",
+    description: "Track progress and action items to ensure teams continuously improve their work processes.",
     color: "from-green-500 to-emerald-500"
   },
   {
     icon: Shield,
     title: "Secure & Private",
-    description: "Dữ liệu team được bảo mật tuyệt đối với hệ thống authentication và authorization mạnh mẽ.",
+    description: "Team data is absolutely secure with robust authentication and authorization systems.",
     color: "from-orange-500 to-red-500"
   },
   {
     icon: Zap,
     title: "Lightning Fast",
-    description: "Performance tối ưu với Next.js 15 và real-time updates qua WebSocket.",
+    description: "Optimized performance with Next.js 15 and real-time updates via WebSocket technology.",
     color: "from-yellow-500 to-orange-500"
   },
   {
     icon: Heart,
     title: "Made with Love",
-    description: "Được phát triển với tình yêu và sự tận tâm bởi team Simplify Đà Lạt.",
+    description: "Developed with passion and dedication by the Simplify Dalat team.",
     color: "from-pink-500 to-rose-500"
   }
 ];
@@ -148,7 +148,7 @@ export default function HomePage() {
             <motion.div variants={fadeInUp} className="mb-6">
               <Badge className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-300 border-blue-500/30 mb-4">
                 <Building2 className="w-3 h-3 mr-1" />
-                Internal Project - Simplify Đà Lạt
+                Internal Project - Simplify Dalat
               </Badge>
             </motion.div>
 
@@ -165,9 +165,9 @@ export default function HomePage() {
               variants={fadeInUp}
               className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed"
             >
-              Công cụ retrospective hiện đại được phát triển nội bộ bởi team{" "}
-              <span className="text-blue-400 font-semibold">vudinh@simplifydalat.com</span>{" "}
-              để tăng cường hiệu quả collaboration và continuous improvement.
+              A modern retrospective tool developed internally by{" "}
+              <span className="text-blue-400 font-semibold">Vu Dinh</span>{" "}
+              to enhance team collaboration efficiency and continuous improvement processes.
             </motion.p>
 
             <motion.div 
@@ -267,7 +267,7 @@ export default function HomePage() {
               <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"> Modern Teams</span>
             </h2>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Được thiết kế để tối ưu hóa quy trình retrospective và tăng cường team collaboration
+              Designed to optimize retrospective processes and enhance team collaboration workflows
             </p>
           </motion.div>
 
@@ -317,14 +317,14 @@ export default function HomePage() {
               </motion.div>
               
               <h3 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                Phát triển bởi Simplify Đà Lạt
+                Developed by Simplify Dalat
               </h3>
               
               <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-                Dự án nội bộ được phát triển bởi team{" "}
-                <span className="text-blue-400 font-semibold">vudinh@simplifydalat.com</span>{" "}
-                với mục tiêu tạo ra công cụ retrospective hiện đại, hiệu quả và dễ sử dụng cho các team trong công ty.
-                Ứng dụng được xây dựng với công nghệ tiên tiến nhất để đảm bảo performance tối ưu và trải nghiệm người dùng xuất sắc.
+                An internal project developed by{" "}
+                <span className="text-blue-400 font-semibold"><a href="mailto:vudinh@simplifydalat.com">Vu Dinh</a></span>{" "}
+                with the goal of creating a modern, efficient, and user-friendly retrospective tool for company teams.
+                The application is built with cutting-edge technology to ensure optimal performance and excellent user experience.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -368,8 +368,8 @@ export default function HomePage() {
             </div>
             
             <div className="text-gray-400 text-sm text-center md:text-right">
-              <p>© 2024 Simplify Đà Lạt. Made with ❤️ in Vietnam.</p>
-              <p className="mt-1">Developed by vudinh@simplifydalat.com</p>
+              <p>© 2025 Simplify Dalat. Made with ❤️ in Dalat</p>
+              <p className="mt-1">Developed by <a href="mailto:vudinh@simplifydalat.com">Vu Dinh</a></p>
             </div>
           </motion.div>
         </div>
