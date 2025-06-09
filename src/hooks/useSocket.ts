@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useSession } from 'next-auth/react';
 import { ServerToClientEvents, ClientToServerEvents } from '@/types/socket';
@@ -24,6 +24,8 @@ export function useSocket(
 ) {
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
   const { data: session } = useSession();
+  const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const voteAdd = (stickerId: string) => {
     if (socketRef.current?.connected) {
@@ -83,6 +85,7 @@ export function useSocket(
     
     if (!socket.connected) {
       console.log(`[useSocket] Connecting socket...`);
+      setIsConnecting(true);
       socket.connect();
     }
 
@@ -101,14 +104,20 @@ export function useSocket(
     // Listen for connection events
     socket.on('connect', () => {
       console.log(`[useSocket] Socket connected successfully`);
+      setIsConnected(true);
+      setIsConnecting(false);
     });
 
     socket.on('disconnect', () => {
       console.log(`[useSocket] Socket disconnected`);
+      setIsConnected(false);
+      setIsConnecting(false);
     });
 
     socket.on('connect_error', (error: Error) => {
       console.error(`[useSocket] Socket connection error:`, error);
+      setIsConnected(false);
+      setIsConnecting(false);
     });
 
 
@@ -183,6 +192,8 @@ export function useSocket(
 
   return {
     socket: socketRef.current,
+    isConnected,
+    isConnecting,
     voteAdd,
     voteRemove,
     commentAdd,

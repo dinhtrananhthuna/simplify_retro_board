@@ -5,10 +5,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
 import { useAppToast } from "@/hooks/useAppToast";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSocket } from "@/hooks/useSocket";
 import { Board, Sticker, PresenceMember } from "@/types/board";
+import PresenceAvatars from "./PresenceAvatars";
+import OnlineCounter from "./OnlineCounter";
 
 const STICKER_TYPES = [
   { key: "went-well", label: "Went Well" },
@@ -197,10 +197,8 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
   console.log('Presence members:', presenceMembers);
   console.log('Combined members:', members);
 
-  // Hiển thị tối đa 5 avatar, còn lại gom vào +N
-  const MAX_AVATAR = 5;
-  const visibleMembers = members.slice(0, MAX_AVATAR);
-  const extraMembers = members.length > MAX_AVATAR ? members.slice(MAX_AVATAR) : [];
+  const onlineCount = members.filter(m => m.online).length;
+  const totalCount = members.length;
 
   return (
     <div className="w-full max-w-7xl mx-auto">
@@ -210,67 +208,13 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold">{board.name}</h1>
         <div className="flex items-center gap-3 flex-wrap">
-          <TooltipProvider>
-            <div className="flex items-center gap-1">
-              {visibleMembers.map((m) => (
-                <Tooltip key={m.email}>
-                  <TooltipTrigger asChild>
-                    <div className="relative">
-                      <Avatar
-                        className={
-                          m.role === "owner"
-                            ? "bg-yellow-400 text-black border border-yellow-500"
-                            : "bg-gray-500 text-white border border-gray-400"
-                        }
-                      >
-                        <AvatarFallback>
-                          {m.email?.[0]?.toUpperCase() || "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                      {/* Chấm trạng thái online/offline */}
-                      <span
-                        className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${m.online ? "bg-green-500" : "bg-gray-400"}`}
-                        title={m.online ? "Đang online" : "Đang offline"}
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">
-                    <div className="font-semibold">{m.email}</div>
-                    <div className="mt-1">
-                      <span className={m.role === "owner" ? "text-yellow-600 font-bold" : "text-gray-600"}>
-                        {m.role === "owner" ? "Owner" : "Member"}
-                      </span>
-                    </div>
-                    <div className="mt-1">
-                      <span className={m.online ? "text-green-600" : "text-gray-500"}>
-                        {m.online ? "Đang online" : "Đang offline"}
-                      </span>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-              {extraMembers.length > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Avatar className="bg-gray-700 text-white border border-gray-400">
-                      <AvatarFallback>+{extraMembers.length}</AvatarFallback>
-                    </Avatar>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs max-w-[220px]">
-                    <div className="font-semibold mb-1">Other members:</div>
-                    <ul className="list-disc pl-4">
-                      {extraMembers.map((m) => (
-                        <li key={m.email}>
-                          {m.email} <span className={m.role === "owner" ? "text-yellow-600 font-bold" : "text-gray-600"}>({m.role === "owner" ? "Owner" : "Member"})</span>
-                          <span className={m.online ? "ml-2 text-green-600" : "ml-2 text-gray-500"}>{m.online ? "● online" : "● offline"}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-          </TooltipProvider>
+          <PresenceAvatars members={members} maxVisible={5} />
+                      <OnlineCounter
+              onlineCount={onlineCount}
+              totalCount={totalCount}
+              members={members}
+              className="relative z-20"
+            />
           <Button
             variant="outline"
             className="gap-2"
