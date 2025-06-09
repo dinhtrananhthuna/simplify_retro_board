@@ -64,16 +64,16 @@ interface ClientToServerEvents {
 - [x] Implement socket server với authentication
 - [x] Xử lý presence events (join/leave)
 - [x] Xử lý sticker events (create/update/delete/move)
-- [ ] Xử lý vote events
-- [ ] Xử lý comment events
-- [ ] Implement error handling và logging
+- [x] Xử lý vote events
+- [x] Xử lý comment events
+- [x] Implement error handling và logging
 
 ### Phase 3: Client Implementation (2 ngày)
-- [ ] Tạo custom hook useSocket
-- [ ] Implement BoardClient component với real-time features
-- [ ] Update StickerBoard component để hỗ trợ real-time
-- [ ] Thêm UI cho presence (online/offline status)
-- [ ] Implement loading states và error handling
+- [x] Tạo custom hook useSocket
+- [x] Implement BoardClient component với real-time features
+- [x] Update StickerBoard component để hỗ trợ real-time
+- [x] Thêm UI cho presence (online/offline status)
+- [x] Implement loading states và error handling
 - [ ] Thêm animations cho real-time updates
 
 ### Phase 4: Testing & Optimization (1 ngày)
