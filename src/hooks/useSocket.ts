@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useSession } from 'next-auth/react';
 import { ServerToClientEvents, ClientToServerEvents } from '@/types/socket';
+import type { Comment } from '@prisma/client';
+
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -11,6 +13,9 @@ interface UseSocketOptions {
   onPresenceLeft?: (data: { email: string }) => void;
   onVoteAdded?: (data: { stickerId: string; email: string }) => void;
   onVoteRemoved?: (data: { stickerId: string; email: string }) => void;
+  onCommentAdded?: (data: Comment) => void;
+  onCommentUpdated?: (data: Comment) => void;
+  onCommentDeleted?: (data: { id: string }) => void;
 }
 
 export function useSocket(
@@ -29,6 +34,24 @@ export function useSocket(
   const voteRemove = (stickerId: string) => {
     if (socketRef.current?.connected) {
       socketRef.current.emit('vote:remove', { stickerId });
+    }
+  };
+
+  const commentAdd = (stickerId: string, content: string) => {
+    if (socketRef.current?.connected && content.trim()) {
+      socketRef.current.emit('comment:add', { stickerId, content: content.trim() });
+    }
+  };
+
+  const commentUpdate = (id: string, content: string) => {
+    if (socketRef.current?.connected && content.trim()) {
+      socketRef.current.emit('comment:update', { id, content: content.trim() });
+    }
+  };
+
+  const commentDelete = (id: string) => {
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('comment:delete', { id });
     }
   };
 
@@ -103,6 +126,17 @@ export function useSocket(
       socket.on('vote:removed', options.onVoteRemoved);
     }
 
+    // Lắng nghe các event comment
+    if (options?.onCommentAdded) {
+      socket.on('comment:added', options.onCommentAdded);
+    }
+    if (options?.onCommentUpdated) {
+      socket.on('comment:updated', options.onCommentUpdated);
+    }
+    if (options?.onCommentDeleted) {
+      socket.on('comment:deleted', options.onCommentDeleted);
+    }
+
     // Rời board khi unmount
     return () => {
       console.log(`[useSocket] Cleaning up socket for board: ${boardId}`);
@@ -122,6 +156,15 @@ export function useSocket(
       if (options?.onVoteRemoved) {
         socket.off('vote:removed', options.onVoteRemoved);
       }
+      if (options?.onCommentAdded) {
+        socket.off('comment:added', options.onCommentAdded);
+      }
+      if (options?.onCommentUpdated) {
+        socket.off('comment:updated', options.onCommentUpdated);
+      }
+      if (options?.onCommentDeleted) {
+        socket.off('comment:deleted', options.onCommentDeleted);
+      }
       socket.off('connect');
       socket.off('disconnect');
       socket.off('connect_error');
@@ -136,5 +179,8 @@ export function useSocket(
     socket: socketRef.current,
     voteAdd,
     voteRemove,
+    commentAdd,
+    commentUpdate,
+    commentDelete,
   };
 } 

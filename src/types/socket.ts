@@ -1,4 +1,4 @@
-import { Sticker } from '@prisma/client';
+import { Sticker, Comment } from '@prisma/client';
 
 export interface ServerToClientEvents {
   // Presence events

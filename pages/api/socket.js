@@ -173,6 +173,186 @@ export default async function handler(req, res) {
         }
       });
 
+      // comment:add
+      socket.on("comment:add", async ({ stickerId, content }) => {
+        const email = socket.data.email;
+        if (!email) {
+          socket.emit("error", { message: "Email is required." });
+          return;
+        }
+
+        try {
+          // Validation input
+          if (!content || content.trim().length === 0) {
+            socket.emit("error", { message: "Comment content is required." });
+            return;
+          }
+          if (content.length > 500) {
+            socket.emit("error", { message: "Comment too long (max 500 characters)." });
+            return;
+          }
+
+          // Kiểm tra sticker có tồn tại không
+          const sticker = await prisma.sticker.findUnique({
+            where: { id: stickerId },
+            include: { board: true }
+          });
+          
+          if (!sticker) {
+            socket.emit("error", { message: "Sticker not found." });
+            return;
+          }
+
+          // Kiểm tra quyền truy cập board
+          const member = await prisma.boardMember.findUnique({
+            where: { boardId_email: { boardId: sticker.boardId, email } },
+          });
+          if (!member && sticker.board.createdBy !== email) {
+            socket.emit("error", { message: "Unauthorized." });
+            return;
+          }
+
+          // Tạo comment
+          const comment = await prisma.comment.create({
+            data: { 
+              stickerId, 
+              email, 
+              content: content.trim() 
+            },
+          });
+
+          // Emit cho tất cả members trong board
+          socket.to(sticker.boardId).emit("comment:added", comment);
+          socket.emit("comment:added", comment); // Emit cho chính user này
+          console.log(`[Socket] Comment added by ${email} for sticker: ${stickerId}`);
+        } catch (error) {
+          console.error(`[Socket] Error adding comment:`, error);
+          socket.emit("error", { message: "Failed to add comment." });
+        }
+      });
+
+      // comment:update
+      socket.on("comment:update", async ({ id, content }) => {
+        const email = socket.data.email;
+        if (!email) {
+          socket.emit("error", { message: "Email is required." });
+          return;
+        }
+
+        try {
+          // Validation input
+          if (!content || content.trim().length === 0) {
+            socket.emit("error", { message: "Comment content is required." });
+            return;
+          }
+          if (content.length > 500) {
+            socket.emit("error", { message: "Comment too long (max 500 characters)." });
+            return;
+          }
+
+          // Tìm comment
+          const comment = await prisma.comment.findUnique({
+            where: { id },
+            include: { 
+              sticker: { 
+                include: { board: true } 
+              } 
+            }
+          });
+          
+          if (!comment) {
+            socket.emit("error", { message: "Comment not found." });
+            return;
+          }
+
+          // Kiểm tra quyền edit (chỉ comment owner)
+          if (comment.email !== email) {
+            socket.emit("error", { message: "Unauthorized to edit this comment." });
+            return;
+          }
+
+          // Kiểm tra quyền truy cập board
+          const member = await prisma.boardMember.findUnique({
+            where: { boardId_email: { boardId: comment.sticker.boardId, email } },
+          });
+          if (!member && comment.sticker.board.createdBy !== email) {
+            socket.emit("error", { message: "Unauthorized." });
+            return;
+          }
+
+          // Cập nhật comment
+          const updatedComment = await prisma.comment.update({
+            where: { id },
+            data: { content: content.trim() },
+          });
+
+          // Emit cho tất cả members trong board
+          socket.to(comment.sticker.boardId).emit("comment:updated", updatedComment);
+          socket.emit("comment:updated", updatedComment); // Emit cho chính user này
+          console.log(`[Socket] Comment updated by ${email} for comment: ${id}`);
+        } catch (error) {
+          console.error(`[Socket] Error updating comment:`, error);
+          socket.emit("error", { message: "Failed to update comment." });
+        }
+      });
+
+      // comment:delete
+      socket.on("comment:delete", async ({ id }) => {
+        const email = socket.data.email;
+        if (!email) {
+          socket.emit("error", { message: "Email is required." });
+          return;
+        }
+
+        try {
+          // Tìm comment
+          const comment = await prisma.comment.findUnique({
+            where: { id },
+            include: { 
+              sticker: { 
+                include: { board: true } 
+              } 
+            }
+          });
+          
+          if (!comment) {
+            socket.emit("error", { message: "Comment not found." });
+            return;
+          }
+
+          // Kiểm tra quyền delete (comment owner hoặc board owner)
+          const isCommentOwner = comment.email === email;
+          const isBoardOwner = comment.sticker.board.createdBy === email;
+          
+          if (!isCommentOwner && !isBoardOwner) {
+            socket.emit("error", { message: "Unauthorized to delete this comment." });
+            return;
+          }
+
+          // Kiểm tra quyền truy cập board
+          const member = await prisma.boardMember.findUnique({
+            where: { boardId_email: { boardId: comment.sticker.boardId, email } },
+          });
+          if (!member && !isBoardOwner) {
+            socket.emit("error", { message: "Unauthorized." });
+            return;
+          }
+
+          // Xóa comment
+          await prisma.comment.delete({
+            where: { id },
+          });
+
+          // Emit cho tất cả members trong board
+          socket.to(comment.sticker.boardId).emit("comment:deleted", { id });
+          socket.emit("comment:deleted", { id }); // Emit cho chính user này
+          console.log(`[Socket] Comment deleted by ${email} for comment: ${id}`);
+        } catch (error) {
+          console.error(`[Socket] Error deleting comment:`, error);
+          socket.emit("error", { message: "Failed to delete comment." });
+        }
+      });
+
       // disconnect
       socket.on("disconnect", () => {
         const email = socket.data.email;
