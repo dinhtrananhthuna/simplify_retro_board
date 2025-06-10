@@ -1,18 +1,20 @@
 // Mock Socket.IO client cho testing
+type EventCallback = (...args: unknown[]) => void
+
 export class MockSocket {
-  private listeners: Record<string, Function[]> = {}
+  private listeners: Record<string, EventCallback[]> = {}
   public connected = false
 
   emit = jest.fn()
   
-  on = jest.fn((event: string, callback: Function) => {
+  on = jest.fn((event: string, callback: EventCallback) => {
     if (!this.listeners[event]) {
       this.listeners[event] = []
     }
     this.listeners[event].push(callback)
   })
 
-  off = jest.fn((event: string, callback?: Function) => {
+  off = jest.fn((event: string, callback?: EventCallback) => {
     if (!this.listeners[event]) return
     
     if (callback) {
@@ -31,7 +33,7 @@ export class MockSocket {
   })
 
   // Helper method để trigger events trong tests
-  mockEmit(event: string, data?: any) {
+  mockEmit(event: string, data?: unknown) {
     if (this.listeners[event]) {
       this.listeners[event].forEach(callback => callback(data))
     }

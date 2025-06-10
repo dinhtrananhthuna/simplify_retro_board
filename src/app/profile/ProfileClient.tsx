@@ -77,7 +77,7 @@ export default function ProfileClient({ user }: ProfileClientProps) {
       toast.success("Password updated successfully!");
       reset();
       setIsChangingPassword(false);
-    } catch (error) {
+    } catch {
       toast.error("Failed to update password");
     }
   };

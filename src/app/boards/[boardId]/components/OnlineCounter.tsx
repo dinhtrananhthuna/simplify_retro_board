@@ -1,5 +1,4 @@
 "use client";
-import { motion } from "framer-motion";
 import { Users } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
