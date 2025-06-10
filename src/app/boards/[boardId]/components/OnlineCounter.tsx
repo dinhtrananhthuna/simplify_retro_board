@@ -29,10 +29,10 @@ export default function OnlineCounter({
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer transition-colors duration-200 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md ${
               onlineCount > 0 
-                ? "bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
-                : "bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100"
+                ? "bg-white border-green-400 text-green-700 hover:bg-green-50"
+                : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
             } ${className}`}
           >
             <Users className="w-3.5 h-3.5" />

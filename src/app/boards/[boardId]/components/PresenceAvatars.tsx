@@ -38,15 +38,21 @@ export default function PresenceAvatars({
                 <TooltipTrigger asChild>
                   <div className="relative">
                     <Avatar
-                      className={`w-8 h-8 border-2 border-white shadow-md transition-all duration-300 cursor-pointer hover:scale-110 ${
+                      className={`w-8 h-8 border-2 shadow-sm transition-all duration-300 cursor-pointer hover:scale-110 hover:shadow-md ${
                         member.role === "owner"
-                          ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-black ring-2 ring-yellow-300"
+                          ? "bg-white border-yellow-400 ring-1 ring-yellow-300/50"
                           : member.online
-                          ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white ring-2 ring-blue-300"
-                          : "bg-gradient-to-br from-gray-400 to-gray-600 text-white ring-2 ring-gray-300"
+                          ? "bg-white border-green-400 ring-1 ring-green-300/50"
+                          : "bg-white border-gray-300 ring-1 ring-gray-200/50"
                       }`}
                     >
-                      <AvatarFallback className="font-semibold text-xs">
+                      <AvatarFallback className={`font-bold text-xs ${
+                        member.role === "owner"
+                          ? "text-yellow-700"
+                          : member.online
+                          ? "text-green-700"
+                          : "text-gray-600"
+                      }`}>
                         {member.email?.[0]?.toUpperCase() || "?"}
                       </AvatarFallback>
                     </Avatar>
@@ -54,7 +60,7 @@ export default function PresenceAvatars({
                     {/* Online/Offline Indicator */}
                     <div
                       className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                        member.online ? "bg-green-500" : "bg-gray-400"
+                        member.online ? "bg-green-500 online-indicator" : "bg-gray-400"
                       }`}
                     />
                   </div>
