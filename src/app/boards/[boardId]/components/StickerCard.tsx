@@ -142,8 +142,8 @@ export default function StickerCard({
       {editing ? (
         <form onSubmit={handleEdit} className="space-y-2">
           <div className="flex gap-2">
-            <Avatar className="w-7 h-7 bg-white border-2 border-green-400 text-green-700 text-[10px] flex-shrink-0 mt-1 shadow-sm">
-              <AvatarFallback>
+            <Avatar className="w-7 h-7 text-[10px] flex-shrink-0 mt-1 shadow-sm">
+              <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
                 {session?.user?.email?.[0]?.toUpperCase() || "?"}
               </AvatarFallback>
             </Avatar>
@@ -191,8 +191,12 @@ export default function StickerCard({
         <>
           {/* Nội dung sticker */}
           <div className="flex gap-2">
-            <Avatar className="w-7 h-7 bg-white border-2 border-gray-300 text-gray-600 text-[10px] flex-shrink-0 mt-1 shadow-sm">
-              <AvatarFallback>
+            <Avatar className="w-7 h-7 text-[10px] flex-shrink-0 mt-1 shadow-sm">
+              <AvatarFallback className={`text-white ${
+                isOwner 
+                  ? "bg-gradient-to-br from-orange-500 to-red-600" 
+                  : "bg-gradient-to-br from-blue-500 to-purple-600"
+              }`}>
                 {sticker.createdBy?.[0]?.toUpperCase() || "?"}
               </AvatarFallback>
             </Avatar>

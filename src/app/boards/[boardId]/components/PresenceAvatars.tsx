@@ -37,21 +37,13 @@ export default function PresenceAvatars({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="relative">
-                    <Avatar
-                      className={`w-8 h-8 border-2 shadow-sm transition-all duration-300 cursor-pointer hover:scale-110 hover:shadow-md ${
+                    <Avatar className="w-8 h-8 shadow-sm transition-all duration-300 cursor-pointer hover:scale-110 hover:shadow-md">
+                      <AvatarFallback className={`font-bold text-xs text-white ${
                         member.role === "owner"
-                          ? "bg-white border-yellow-400 ring-1 ring-yellow-300/50"
+                          ? "bg-gradient-to-br from-yellow-500 to-orange-600"
                           : member.online
-                          ? "bg-white border-green-400 ring-1 ring-green-300/50"
-                          : "bg-white border-gray-300 ring-1 ring-gray-200/50"
-                      }`}
-                    >
-                      <AvatarFallback className={`font-bold text-xs ${
-                        member.role === "owner"
-                          ? "text-yellow-700"
-                          : member.online
-                          ? "text-green-700"
-                          : "text-gray-600"
+                          ? "bg-gradient-to-br from-green-500 to-emerald-600"
+                          : "bg-gradient-to-br from-gray-500 to-gray-700"
                       }`}>
                         {member.email?.[0]?.toUpperCase() || "?"}
                       </AvatarFallback>
