@@ -1,7 +1,7 @@
 import StickerForm from "./StickerForm";
 import StickerCard from "./StickerCard";
 import { Sticker } from "@/types/board";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
 export default function StickerColumn({
   type,
@@ -29,24 +29,24 @@ export default function StickerColumn({
   loading?: boolean;
 }) {
   const [newStickers, setNewStickers] = useState<Set<string>>(new Set());
-  const [previousStickerIds, setPreviousStickerIds] = useState<Set<string>>(new Set());
+  const previousStickerIdsRef = useRef<Set<string>>(new Set());
 
   // Create stable stickerIds to avoid infinite loops
   const stickerIds = useMemo(() => stickers.map(s => s.id), [stickers]);
-  const stickerIdString = useMemo(() => stickerIds.join(','), [stickerIds]);
 
-  // Track new stickers for animation - chỉ khi có sticker mới được thêm
+  // Track new stickers for animation using ref to avoid dependency issues
   useEffect(() => {
     if (stickers.length === 0) {
-      setPreviousStickerIds(new Set());
+      previousStickerIdsRef.current = new Set();
       return;
     }
 
     const currentIds = new Set(stickerIds);
+    const previousIds = previousStickerIdsRef.current;
     
     // Chỉ tìm stickers thực sự mới (không có trong previous)
-    if (previousStickerIds.size > 0) {
-      const addedIds = new Set([...currentIds].filter(id => !previousStickerIds.has(id)));
+    if (previousIds.size > 0) {
+      const addedIds = new Set([...currentIds].filter(id => !previousIds.has(id)));
       
       if (addedIds.size > 0) {
         setNewStickers(addedIds);
@@ -56,18 +56,22 @@ export default function StickerColumn({
           setNewStickers(new Set());
         }, 650); // Slightly longer than animation duration
         
+        // Update ref for next comparison
+        previousStickerIdsRef.current = currentIds;
+        
         return () => clearTimeout(timer);
       }
     }
     
-    setPreviousStickerIds(currentIds);
-  }, [stickerIdString, previousStickerIds, stickerIds, stickers.length]); // Add stickers.length
+    // Update ref for next comparison
+    previousStickerIdsRef.current = currentIds;
+  }, [stickerIds, stickers.length]); // Clean dependencies without ref
 
   // Reset khi component unmount
   useEffect(() => {
     return () => {
       setNewStickers(new Set());
-      setPreviousStickerIds(new Set());
+      previousStickerIdsRef.current = new Set();
     };
   }, []);
   return (
