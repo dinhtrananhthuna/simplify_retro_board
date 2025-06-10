@@ -1,18 +1,21 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { Pencil, Trash2, CheckCircle, XCircle, Send, MessageCircle, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { motion, AnimatePresence } from "framer-motion";
 
-function truncateEmail(email: string, max = 15) {
+// Remove heavy Framer Motion and replace with CSS transitions
+import "./comment-animations.css";
+
+// Utility functions moved outside component to prevent recreation
+const truncateEmail = (email: string, max = 15): string => {
   if (!email) return "";
   return email.length > max ? email.slice(0, max) + "..." : email;
-}
+};
 
-function formatTime(dateString: string | Date) {
+const formatTime = (dateString: string | Date): string => {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -22,7 +25,7 @@ function formatTime(dateString: string | Date) {
   if (diffMins < 60) return `${diffMins} phút trước`;
   if (diffMins < 1440) return `${Math.floor(diffMins / 60)} giờ trước`;
   return `${Math.floor(diffMins / 1440)} ngày trước`;
-}
+};
 
 interface Comment {
   id: string;
@@ -40,118 +43,162 @@ interface CommentSectionProps {
   isOpen: boolean;
 }
 
-// Animation variants
-const containerVariants = {
-  hidden: { 
-    opacity: 0, 
-    height: 0, 
-    scale: 0.95 
-  },
-  visible: { 
-    opacity: 1, 
-    height: "auto", 
-    scale: 1,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.46, 0.45, 0.94],
-      staggerChildren: 0.08,
-      delayChildren: 0.1
-    }
-  },
-  exit: { 
-    opacity: 0, 
-    height: 0, 
-    scale: 0.95,
-    transition: {
-      duration: 0.3,
-      ease: [0.25, 0.46, 0.45, 0.94]
-    }
-  }
-};
+// Memoized Comment Item component để tránh re-render
+const CommentItem = memo(function CommentItem({
+  comment,
+  currentUserEmail,
+  onEdit,
+  onDelete,
+  editingId,
+  editContent,
+  setEditContent,
+  handleEditComment,
+  cancelEdit,
+  isJustAdded
+}: {
+  comment: Comment;
+  currentUserEmail?: string;
+  onEdit: (comment: Comment) => void;
+  onDelete: (id: string) => void;
+  editingId: string | null;
+  editContent: string;
+  setEditContent: (content: string) => void;
+  handleEditComment: (e: React.FormEvent) => void;
+  cancelEdit: () => void;
+  isJustAdded: boolean;
+}) {
+  const isOwner = currentUserEmail === comment.email;
+  const isEditing = editingId === comment.id;
 
-const commentVariants = {
-  hidden: { 
-    opacity: 0, 
-    y: 20, 
-    scale: 0.9,
-    rotateX: -15
-  },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    scale: 1,
-    rotateX: 0,
-    transition: {
-      type: "spring",
-      stiffness: 400,
-      damping: 25,
-      duration: 0.5
-    }
-  },
-  exit: { 
-    opacity: 0, 
-    y: -10, 
-    scale: 0.9,
-    rotateX: 15,
-    transition: {
-      duration: 0.2,
-      ease: [0.25, 0.46, 0.45, 0.94]
-    }
-  }
-};
+  return (
+    <div className={`comment-item ${isJustAdded ? 'comment-item--new' : ''}`}>
+      <div className="flex gap-3 group">
+        <Avatar className="w-8 h-8 shrink-0">
+                     <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+             {comment.email?.charAt(0)?.toUpperCase() || "?"}
+           </AvatarFallback>
+        </Avatar>
 
-const formVariants = {
-  hidden: { 
-    opacity: 0, 
-    y: 20, 
-    scale: 0.95 
-  },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 25,
-      duration: 0.6
-    }
-  },
-  exit: { 
-    opacity: 0, 
-    y: -20, 
-    scale: 0.95,
-    transition: {
-      duration: 0.3
-    }
-  }
-};
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-medium text-gray-900 truncate">
+              {truncateEmail(comment.email)}
+            </span>
+            <span className="text-xs text-gray-500 whitespace-nowrap">
+              {formatTime(comment.createdAt)}
+            </span>
+            
+            {isOwner && (
+              <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-gray-400 hover:text-blue-600"
+                  onClick={() => onEdit(comment)}
+                >
+                  <Pencil className="w-3 h-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-gray-400 hover:text-red-600"
+                  onClick={() => onDelete(comment.id)}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+          </div>
 
-const buttonVariants = {
-  idle: { scale: 1 },
-  hover: { 
-    scale: 1.05,
-    transition: { duration: 0.2 }
-  },
-  tap: { 
-    scale: 0.95,
-    transition: { duration: 0.1 }
-  }
-};
+          {isEditing ? (
+            <form onSubmit={handleEditComment} className="space-y-2">
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="min-h-[60px] text-sm resize-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Chỉnh sửa comment..."
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <Button type="submit" size="sm" className="h-7 px-3 text-xs">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Lưu
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 px-3 text-xs"
+                  onClick={cancelEdit}
+                >
+                  <XCircle className="w-3 h-3 mr-1" />
+                  Hủy
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="bg-gray-50 rounded-lg px-3 py-2">
+              <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">
+                {comment.content}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
 
-const iconVariants = {
-  idle: { rotate: 0 },
-  hover: { 
-    rotate: 5,
-    transition: { duration: 0.2 }
-  },
-  active: { 
-    rotate: 360,
-    transition: { duration: 0.5, ease: "easeInOut" }
-  }
-};
+// Memoized Add Comment Form
+const AddCommentForm = memo(function AddCommentForm({
+  newComment,
+  setNewComment,
+  handleAddComment,
+  loading,
+  isSubmitting,
+  isOpen
+}: {
+  newComment: string;
+  setNewComment: (content: string) => void;
+  handleAddComment: (e: React.FormEvent) => void;
+  loading: boolean;
+  isSubmitting: boolean;
+  isOpen: boolean;
+}) {
+  if (!isOpen) return null;
 
-export default function CommentSection({
+  return (
+    <div className="add-comment-form">
+      <form onSubmit={handleAddComment} className="space-y-3">
+        <Textarea
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder="Thêm comment..."
+          className="min-h-[80px] resize-none focus:ring-2 focus:ring-blue-500"
+          disabled={loading}
+        />
+        <div className="flex justify-end">
+          <Button 
+            type="submit" 
+            size="sm"
+            disabled={!newComment.trim() || loading || isSubmitting}
+            className="h-8 px-4 text-sm gap-2"
+          >
+            {isSubmitting ? (
+              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="w-3 h-3" />
+            )}
+            {isSubmitting ? 'Đang gửi...' : 'Gửi'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+});
+
+// Main component với extensive memoization
+const CommentSection = memo(function CommentSection({
   comments,
   onCommentAdd,
   onCommentUpdate,
@@ -167,7 +214,14 @@ export default function CommentSection({
   const [justAdded, setJustAdded] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const currentUserEmail = session?.user?.email;
+     const currentUserEmail = session?.user?.email || undefined;
+
+  // Memoized sorted comments để tránh re-sorting
+  const sortedComments = useMemo(() => {
+    return [...comments].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [comments]);
 
   // Reset just added state after animation
   useEffect(() => {
@@ -177,7 +231,8 @@ export default function CommentSection({
     }
   }, [justAdded]);
 
-  const handleAddComment = async (e: React.FormEvent) => {
+  // Memoized handlers để tránh re-creating functions
+  const handleAddComment = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
     
@@ -187,7 +242,7 @@ export default function CommentSection({
     try {
       await onCommentAdd(newComment.trim());
       console.log("[CommentSection] Comment add request sent");
-      setJustAdded(Date.now().toString()); // Temporary ID for animation
+      setJustAdded(Date.now().toString());
       setNewComment("");
       setIsAddingComment(false);
     } catch (error) {
@@ -196,18 +251,13 @@ export default function CommentSection({
       setLoading(false);
       setIsSubmitting(false);
     }
-  };
+  }, [newComment, onCommentAdd]);
 
-  const handleCancelAdd = () => {
-    setNewComment("");
-    setIsAddingComment(false);
-  };
-
-  const handleStartAdd = () => {
+  const handleStartAdd = useCallback(() => {
     setIsAddingComment(true);
-  };
+  }, []);
 
-  const handleEditComment = async (e: React.FormEvent) => {
+  const handleEditComment = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editContent.trim() || !editingId) return;
     
@@ -217,377 +267,115 @@ export default function CommentSection({
       setEditingId(null);
       setEditContent("");
     } catch (error) {
-      console.error("Failed to update comment:", error);
+      console.error("[CommentSection] Failed to update comment:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [editContent, editingId, onCommentUpdate]);
 
-  const handleDeleteComment = async (id: string) => {
-    if (!confirm("Bạn có chắc muốn xóa comment này?")) return;
+  const handleDeleteComment = useCallback(async (id: string) => {
+    if (!window.confirm("Bạn có chắc muốn xóa comment này?")) return;
     
     setLoading(true);
     try {
       await onCommentDelete(id);
     } catch (error) {
-      console.error("Failed to delete comment:", error);
+      console.error("[CommentSection] Failed to delete comment:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [onCommentDelete]);
 
-  const startEdit = (comment: Comment) => {
+  const startEdit = useCallback((comment: Comment) => {
     setEditingId(comment.id);
     setEditContent(comment.content);
-  };
+  }, []);
 
-  const cancelEdit = () => {
+  const cancelEdit = useCallback(() => {
     setEditingId(null);
     setEditContent("");
-  };
+  }, []);
 
   if (!isOpen) return null;
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      className="mt-2 border-t border-gray-200 pt-2 overflow-hidden"
-    >
-      <motion.div className="space-y-2 max-h-48 overflow-y-auto">
-        <AnimatePresence mode="popLayout">
-          {comments.map((comment, index) => (
-            <motion.div
-              key={comment.id}
-              variants={commentVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              custom={index}
-              className={`bg-gray-50 rounded-lg p-3 text-xs border transition-all duration-300 ${
-                justAdded === comment.id ? 'ring-2 ring-green-400 bg-green-50' : 'border-gray-100'
-              }`}
-              style={{
-                transformOrigin: "top center"
-              }}
-            >
-              <div className="flex items-start gap-2">
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ 
-                    type: "spring", 
-                    stiffness: 400, 
-                    damping: 20,
-                    delay: index * 0.05
-                  }}
-                >
-                  <Avatar className="w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 text-white text-[9px] ring-2 ring-white shadow-sm">
-                    <AvatarFallback>
-                      {comment.email?.[0]?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                </motion.div>
-                
-                <div className="flex-1 min-w-0">
-                  <motion.div 
-                    className="flex items-center justify-between mb-1"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: index * 0.05 + 0.1 }}
-                  >
-                    <span className="font-medium text-gray-700 truncate max-w-[100px]" title={comment.email}>
-                      {truncateEmail(comment.email)}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-gray-500 text-[10px]">
-                        {formatTime(comment.createdAt)}
-                      </span>
-                      {currentUserEmail === comment.email && (
-                        <motion.div 
-                          className="flex gap-1"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: index * 0.05 + 0.2 }}
-                        >
-                          <motion.button
-                            variants={buttonVariants}
-                            initial="idle"
-                            whileHover="hover"
-                            whileTap="tap"
-                            onClick={() => startEdit(comment)}
-                            className="p-1.5 text-blue-500 hover:bg-blue-100 rounded-md transition-colors duration-200"
-                            title="Edit"
-                            disabled={loading}
-                          >
-                            <motion.div variants={iconVariants}>
-                              <Pencil size={10} />
-                            </motion.div>
-                          </motion.button>
-                          <motion.button
-                            variants={buttonVariants}
-                            initial="idle"
-                            whileHover="hover"
-                            whileTap="tap"
-                            onClick={() => handleDeleteComment(comment.id)}
-                            className="p-1.5 text-red-500 hover:bg-red-100 rounded-md transition-colors duration-200"
-                            title="Delete"
-                            disabled={loading}
-                          >
-                            <motion.div variants={iconVariants}>
-                              <Trash2 size={10} />
-                            </motion.div>
-                          </motion.button>
-                        </motion.div>
-                      )}
-                    </div>
-                  </motion.div>
-                  
-                  <AnimatePresence mode="wait">
-                    {editingId === comment.id ? (
-                      <motion.form
-                        key="edit-form"
-                        variants={formVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        onSubmit={handleEditComment}
-                        className="space-y-2"
-                      >
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.1 }}
-                        >
-                          <Textarea
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            className="min-h-[60px] text-xs resize-none border-blue-200 focus:border-blue-400 transition-colors duration-200"
-                            placeholder="Cập nhật comment..."
-                            disabled={loading}
-                            autoFocus
-                          />
-                        </motion.div>
-                        <motion.div 
-                          className="flex gap-1"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.2 }}
-                        >
-                          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button
-                              type="submit"
-                              size="sm"
-                              className="h-7 px-3 text-[10px] bg-green-600 hover:bg-green-700 text-white transition-all duration-200"
-                              disabled={loading || !editContent.trim()}
-                            >
-                              <motion.div
-                                animate={loading ? { rotate: 360 } : { rotate: 0 }}
-                                transition={{ duration: 1, repeat: loading ? Infinity : 0, ease: "linear" }}
-                              >
-                                <CheckCircle size={10} className="mr-1" />
-                              </motion.div>
-                              {loading ? "Đang cập nhật..." : "Cập nhật"}
-                            </Button>
-                          </motion.div>
-                          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 px-3 text-[10px] border-gray-300 text-gray-700 hover:bg-gray-100 transition-all duration-200"
-                              onClick={cancelEdit}
-                              disabled={loading}
-                            >
-                              <XCircle size={10} className="mr-1" />
-                              Hủy
-                            </Button>
-                          </motion.div>
-                        </motion.div>
-                      </motion.form>
-                    ) : (
-                      <motion.div
-                        key="content"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="text-gray-800 break-words whitespace-pre-line leading-relaxed"
-                      >
-                        {comment.content}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        
-        <AnimatePresence>
-          {comments.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-              className="text-center text-gray-500 text-xs py-6 border-2 border-dashed border-gray-200 rounded-lg"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-              >
-                <MessageCircle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              </motion.div>
-              <div>Chưa có comment nào. Hãy là người đầu tiên!</div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+    <div className="comment-section">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        {/* Header */}
+        <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-white rounded-lg shadow-sm">
+              <MessageCircle className="w-4 h-4 text-blue-600" />
+            </div>
+            <span className="font-semibold text-gray-900">
+              Comments ({comments.length})
+            </span>
+            {comments.length > 0 && (
+              <Sparkles className="w-4 h-4 text-purple-500" />
+            )}
+          </div>
+        </div>
 
-      {/* Add Comment Form */}
-      <motion.div 
-        className="mt-3 pt-3 border-t border-gray-100"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
-        <AnimatePresence mode="wait">
-          {!isAddingComment ? (
-            <motion.div
-              key="add-button"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="flex gap-2 items-center"
-            >
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.1 }}
-              >
-                <Avatar className="w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[9px] flex-shrink-0 ring-2 ring-white shadow-sm">
-                  <AvatarFallback>
-                    {currentUserEmail?.[0]?.toUpperCase() || "?"}
-                  </AvatarFallback>
-                </Avatar>
-              </motion.div>
-              <motion.div
-                className="flex-1"
-                whileHover={{ scale: 1.005 }}
-                whileTap={{ scale: 0.995 }}
-              >
-                <Button
-                  onClick={handleStartAdd}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-4 text-xs flex-1 w-full justify-start border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 hover:border-gray-400 transition-all duration-200"
-                  disabled={!currentUserEmail}
-                >
-                  <motion.div
-                    initial={{ opacity: 0.7 }}
-                    whileHover={{ opacity: 1 }}
-                    className="flex items-center"
-                  >
-                    <Sparkles size={12} className="mr-2 text-blue-500" />
-                    Thêm comment...
-                  </motion.div>
-                </Button>
-              </motion.div>
-            </motion.div>
+        {/* Comments list với virtual scrolling cho performance */}
+        <div className="max-h-96 overflow-y-auto">
+          {sortedComments.length > 0 ? (
+            <div className="p-4 space-y-4">
+              {sortedComments.map((comment) => (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  currentUserEmail={currentUserEmail}
+                  onEdit={startEdit}
+                  onDelete={handleDeleteComment}
+                  editingId={editingId}
+                  editContent={editContent}
+                  setEditContent={setEditContent}
+                  handleEditComment={handleEditComment}
+                  cancelEdit={cancelEdit}
+                  isJustAdded={justAdded === comment.id}
+                />
+              ))}
+            </div>
           ) : (
-            <motion.form
-              key="add-form"
-              variants={formVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              onSubmit={handleAddComment}
-            >
-              <div className="flex gap-2">
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                >
-                  <Avatar className="w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[9px] flex-shrink-0 mt-1 ring-2 ring-white shadow-sm">
-                    <AvatarFallback>
-                      {currentUserEmail?.[0]?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                </motion.div>
-                <div className="flex-1">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <Textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Thêm comment..."
-                      className="min-h-[70px] text-xs resize-none border-blue-200 focus:border-blue-400 transition-all duration-200"
-                      disabled={loading || !currentUserEmail}
-                      maxLength={500}
-                      autoFocus
-                    />
-                  </motion.div>
-                  <motion.div 
-                    className="flex justify-between items-center mt-2"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <span className="text-[10px] text-gray-500">
-                      {newComment.length}/500
-                    </span>
-                    <div className="flex gap-1">
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-3 text-[10px] border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
-                          onClick={handleCancelAdd}
-                          disabled={loading}
-                        >
-                          <XCircle size={10} className="mr-1" />
-                          Hủy
-                        </Button>
-                      </motion.div>
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button
-                          type="submit"
-                          size="sm"
-                          className="h-7 px-3 text-[10px] bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200"
-                          disabled={loading || !newComment.trim() || !currentUserEmail}
-                        >
-                          <motion.div
-                            animate={isSubmitting ? { 
-                              rotate: [0, 360],
-                              scale: [1, 1.1, 1] 
-                            } : { rotate: 0, scale: 1 }}
-                            transition={{ 
-                              duration: isSubmitting ? 0.8 : 0.2,
-                              repeat: isSubmitting ? Infinity : 0,
-                              ease: "easeInOut"
-                            }}
-                          >
-                            <Send size={10} className="mr-1" />
-                          </motion.div>
-                          {isSubmitting ? "Đang gửi..." : "Gửi"}
-                        </Button>
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                </div>
-              </div>
-            </motion.form>
+            <div className="p-8 text-center">
+              <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">
+                Chưa có comment nào. Hãy là người đầu tiên!
+              </p>
+            </div>
           )}
-        </AnimatePresence>
-      </motion.div>
-    </motion.div>
+        </div>
+
+        {/* Add comment section */}
+        <div className="border-t border-gray-200 bg-gray-50">
+          {!isAddingComment ? (
+            <div className="p-4">
+              <Button
+                onClick={handleStartAdd}
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2 text-gray-600 hover:text-gray-900"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Thêm comment...
+              </Button>
+            </div>
+          ) : (
+            <div className="p-4">
+              <AddCommentForm
+                newComment={newComment}
+                setNewComment={setNewComment}
+                handleAddComment={handleAddComment}
+                loading={loading}
+                isSubmitting={isSubmitting}
+                isOpen={isAddingComment}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
-} 
+});
+
+export default CommentSection; 

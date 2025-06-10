@@ -1,0 +1,130 @@
+/* Comment Section Animations - Thay thế Framer Motion để giảm bundle size */
+
+.comment-section {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.comment-item {
+  animation: slideInLeft 0.3s ease-out;
+  transition: all 0.2s ease;
+}
+
+.comment-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.comment-item--new {
+  animation: highlightComment 0.8s ease-out;
+}
+
+.add-comment-form {
+  animation: expandForm 0.3s ease-out;
+}
+
+/* Keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes highlightComment {
+  0% {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    background-color: rgba(34, 197, 94, 0.05);
+    border-color: rgba(34, 197, 94, 0.2);
+  }
+  100% {
+    background-color: transparent;
+    border-color: transparent;
+  }
+}
+
+@keyframes expandForm {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: scaleY(0.8);
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+    transform: scaleY(1);
+  }
+}
+
+/* Button hover effects */
+.comment-item button {
+  transition: all 0.2s ease;
+}
+
+.comment-item button:hover {
+  transform: scale(1.05);
+}
+
+.comment-item button:active {
+  transform: scale(0.95);
+}
+
+/* Smooth loading spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Performance optimizations */
+.comment-section * {
+  will-change: auto;
+}
+
+.comment-item {
+  contain: layout style paint;
+}
+
+/* Responsive animations */
+@media (prefers-reduced-motion: reduce) {
+  .comment-section,
+  .comment-item,
+  .comment-item--new,
+  .add-comment-form {
+    animation: none;
+  }
+  
+  .comment-item:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .comment-item button:hover,
+  .comment-item button:active {
+    transform: none;
+  }
+} 

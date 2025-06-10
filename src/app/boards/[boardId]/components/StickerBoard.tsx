@@ -1,157 +1,223 @@
 "use client";
-import { useEffect, useState } from "react";
-import StickerColumn from "./StickerColumn";
+import { useEffect, useState, useCallback, useMemo, memo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
 import { useAppToast } from "@/hooks/useAppToast";
 import { useSocket } from "@/hooks/useSocket";
-import { Board, Sticker, PresenceMember } from "@/types/board";
+import { Board, Sticker, PresenceMember, Comment } from "@/types/board";
+
+// Direct imports để debug issue
+import StickerColumn from "./StickerColumn";
 import PresenceAvatars from "./PresenceAvatars";
 import OnlineCounter from "./OnlineCounter";
+
+// Component loading fallback
+const ComponentSkeleton = () => (
+  <div className="animate-pulse bg-gray-200 rounded-lg h-32 w-full" />
+);
 
 const STICKER_TYPES = [
   { key: "went-well", label: "Went Well" },
   { key: "to-improve", label: "To Improve" },
   { key: "action-items", label: "Action Items" },
-];
+] as const;
 
-export default function StickerBoard({ boardId }: { boardId: string }) {
+interface StickerBoardProps {
+  boardId: string;
+}
+
+// Memoized component để tránh unnecessary re-renders
+const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) {
+  console.log('[StickerBoard] Component rendering with boardId:', boardId);
+  
   const [board, setBoard] = useState<Board | null>(null);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
-  const toast = useAppToast?.();
-  // State realtime presence
+  const toast = useAppToast();
   const [presenceMembers, setPresenceMembers] = useState<PresenceMember[]>([]);
 
-  const fetchBoard = async () => {
-    const res = await fetch(`/api/boards/${boardId}`);
-    if (res.ok) {
-      setBoard(await res.json());
+  // Memoized fetch functions với stable dependencies
+  const fetchBoard = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/boards/${boardId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setBoard(data);
+      }
+    } catch (error) {
+      console.error('Error fetching board:', error);
+      // Sử dụng optional chaining thay vì dependency
+      if (toast?.error) {
+        toast.error('Không thể tải board');
+      }
     }
-  };
-  const fetchStickers = async () => {
-    const res = await fetch(`/api/stickers?boardId=${boardId}`);
-    if (res.ok) {
-      setStickers(await res.json());
-    }
-  };
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([fetchBoard(), fetchStickers()]).finally(() => setLoading(false));
-    // eslint-disable-next-line
-  }, [boardId]);
+  }, [boardId]); // Chỉ boardId dependency
 
-  // --- SOCKET REALTIME với PRESENCE, VOTE và COMMENT ---
+  const fetchStickers = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/stickers?boardId=${boardId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStickers(data);
+      }
+    } catch (error) {
+      console.error('Error fetching stickers:', error);
+      // Sử dụng optional chaining thay vì dependency  
+      if (toast?.error) {
+        toast.error('Không thể tải stickers');
+      }
+    }
+  }, [boardId]); // Chỉ boardId dependency
+
+  // Initial data loading với stable fetch functions
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchBoard(), fetchStickers()]);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [fetchBoard, fetchStickers]); // Sử dụng stable fetch functions
+
+     // Memoized socket event handlers với stable references
+   const socketHandlers = useMemo(() => ({
+     onPresenceList: (data: { members: PresenceMember[] }) => {
+       console.log('Received presence list:', data);
+       setPresenceMembers(data.members);
+     },
+     onPresenceJoined: (data: { email: string; role: string }) => {
+       console.log('Member joined:', data);
+       setPresenceMembers((prev) => {
+         const exists = prev.find((m) => m.email === data.email);
+         if (exists) {
+           return prev.map((m) => m.email === data.email ? { ...m, online: true } : m);
+         }
+         return [...prev, { ...data, online: true }];
+       });
+       // Sử dụng function thay vì dependency để tránh infinite loop
+       if (toast?.success) {
+         toast.success(`${data.email} vừa tham gia board!`);
+       }
+     },
+    onPresenceLeft: (data: { email: string }) => {
+      console.log('Member left:', data);
+      setPresenceMembers((prev) => 
+        prev.map((m) => m.email === data.email ? { ...m, online: false } : m)
+      );
+      if (toast?.info) {
+        toast.info(`${data.email} vừa rời board!`);
+      }
+    },
+    onVoteAdded: (data: { stickerId: string; email: string }) => {
+      console.log('Vote added:', data);
+      setStickers((prev) => prev.map((sticker) => {
+        if (sticker.id === data.stickerId) {
+          const newVote = { 
+            id: `temp-${Date.now()}`, 
+            stickerId: data.stickerId, 
+            email: data.email, 
+            createdAt: new Date() 
+          };
+          return { ...sticker, votes: [...(sticker.votes || []), newVote] };
+        }
+        return sticker;
+      }));
+      if (toast?.success) {
+        toast.success(`${data.email} đã vote cho sticker!`);
+      }
+    },
+    onVoteRemoved: (data: { stickerId: string; email: string }) => {
+      console.log('Vote removed:', data);
+      setStickers((prev) => prev.map((sticker) => {
+        if (sticker.id === data.stickerId) {
+          return { 
+            ...sticker, 
+            votes: (sticker.votes || []).filter((vote) => vote.email !== data.email) 
+          };
+        }
+        return sticker;
+      }));
+      if (toast?.info) {
+        toast.info(`${data.email} đã bỏ vote cho sticker!`);
+      }
+    },
+         onCommentAdded: (data: Comment) => {
+      console.log('[StickerBoard] Comment added event received:', data);
+      setStickers((prev) => {
+        const updated = prev.map((sticker) => {
+          if (sticker.id === data.stickerId) {
+            console.log('[StickerBoard] Adding comment to sticker:', sticker.id);
+            return { ...sticker, comments: [...(sticker.comments || []), data] };
+          }
+          return sticker;
+        });
+        console.log('[StickerBoard] Updated stickers after comment add:', updated);
+        return updated;
+      });
+      if (toast?.success) {
+        toast.success(`${data.email} đã thêm comment!`);
+      }
+    },
+         onCommentUpdated: (data: Comment) => {
+      console.log('Comment updated:', data);
+      setStickers((prev) => prev.map((sticker) => {
+        if (sticker.id === data.stickerId) {
+          return { 
+            ...sticker, 
+            comments: (sticker.comments || []).map((comment) => 
+              comment.id === data.id ? data : comment
+            ) 
+          };
+        }
+        return sticker;
+      }));
+      if (toast?.info) {
+        toast.info(`${data.email} đã cập nhật comment!`);
+      }
+    },
+    onCommentDeleted: (data: { id: string }) => {
+      console.log('Comment deleted:', data);
+      setStickers((prev) => prev.map((sticker) => {
+        const updatedComments = (sticker.comments || []).filter((comment) => comment.id !== data.id);
+        if (updatedComments.length !== (sticker.comments || []).length) {
+          return { ...sticker, comments: updatedComments };
+        }
+        return sticker;
+      }));
+      if (toast?.info) {
+        toast.info(`Comment đã được xóa!`);
+      }
+    },
+  }), []); // Loại bỏ toast dependency để tránh infinite loop
+
+  // Socket setup với optimized handlers
   const { socket: socketInstance, voteAdd, voteRemove, commentAdd, commentUpdate, commentDelete } = useSocket(
     boardId,
-    {
-      onPresenceList: (data) => {
-        console.log('Received presence list:', data);
-        setPresenceMembers(data.members);
-      },
-      onPresenceJoined: (data) => {
-        console.log('Member joined:', data);
-        setPresenceMembers((prev) => {
-          // Nếu đã có thì update online, chưa có thì thêm mới
-          const exists = prev.find((m) => m.email === data.email);
-          if (exists) {
-            return prev.map((m) => m.email === data.email ? { ...m, online: true } : m);
-          }
-          return [...prev, { ...data, online: true }];
-        });
-        if (toast) toast.success(`${data.email} vừa tham gia board!`);
-      },
-      onPresenceLeft: (data) => {
-        console.log('Member left:', data);
-        setPresenceMembers((prev) => prev.map((m) => m.email === data.email ? { ...m, online: false } : m));
-        if (toast) toast.info(`${data.email} vừa rời board!`);
-      },
-      onVoteAdded: (data) => {
-        console.log('Vote added:', data);
-        // Tìm sticker và thêm vote mới
-        setStickers((prev) => prev.map((sticker) => {
-          if (sticker.id === data.stickerId) {
-            const newVote = { id: `temp-${Date.now()}`, stickerId: data.stickerId, email: data.email, createdAt: new Date() };
-            return { ...sticker, votes: [...(sticker.votes || []), newVote] };
-          }
-          return sticker;
-        }));
-        if (toast) toast.success(`${data.email} đã vote cho sticker!`);
-      },
-      onVoteRemoved: (data) => {
-        console.log('Vote removed:', data);
-        // Tìm sticker và xóa vote
-        setStickers((prev) => prev.map((sticker) => {
-          if (sticker.id === data.stickerId) {
-            return { ...sticker, votes: (sticker.votes || []).filter((vote) => vote.email !== data.email) };
-          }
-          return sticker;
-        }));
-        if (toast) toast.info(`${data.email} đã bỏ vote cho sticker!`);
-      },
-      onCommentAdded: (data) => {
-        console.log('[StickerBoard] Comment added event received:', data);
-        // Tìm sticker và thêm comment mới
-        setStickers((prev) => {
-          const updated = prev.map((sticker) => {
-            if (sticker.id === data.stickerId) {
-              console.log('[StickerBoard] Adding comment to sticker:', sticker.id);
-              return { ...sticker, comments: [...(sticker.comments || []), data] };
-            }
-            return sticker;
-          });
-          console.log('[StickerBoard] Updated stickers after comment add:', updated);
-          return updated;
-        });
-        if (toast) toast.success(`${data.email} đã thêm comment!`);
-      },
-      onCommentUpdated: (data) => {
-        console.log('Comment updated:', data);
-        // Tìm sticker và update comment
-        setStickers((prev) => prev.map((sticker) => {
-          if (sticker.id === data.stickerId) {
-            return { 
-              ...sticker, 
-              comments: (sticker.comments || []).map((comment) => 
-                comment.id === data.id ? data : comment
-              ) 
-            };
-          }
-          return sticker;
-        }));
-        if (toast) toast.info(`${data.email} đã cập nhật comment!`);
-      },
-      onCommentDeleted: (data) => {
-        console.log('Comment deleted:', data);
-        // Tìm sticker và xóa comment
-        setStickers((prev) => prev.map((sticker) => {
-          const updatedComments = (sticker.comments || []).filter((comment) => comment.id !== data.id);
-          if (updatedComments.length !== (sticker.comments || []).length) {
-            return { ...sticker, comments: updatedComments };
-          }
-          return sticker;
-        }));
-        if (toast) toast.info(`Comment đã được xóa!`);
-      },
-    }
+    socketHandlers
   );
 
-  // --- SOCKET REALTIME STICKERS ---
+  // Memoized socket sticker listeners để tránh re-subscribing
   useEffect(() => {
     if (!socketInstance) return;
+    
     console.log('Setting up socket sticker listeners');
-    // Khi có sticker mới
+    
     const handleCreated = (data: Sticker) => {
       console.log('Sticker created:', data);
       setStickers((prev) => [...prev, data]);
     };
-    // Khi sticker được cập nhật
+    
     const handleUpdated = (data: Sticker) => {
       console.log('Sticker updated:', data);
       setStickers((prev) => prev.map((s) => {
         if (s.id === data.id) {
-          // Merge dữ liệu mới với comments/votes hiện có nếu dữ liệu mới không có
           return {
             ...data,
             votes: data.votes && data.votes.length >= 0 ? data.votes : s.votes || [],
@@ -161,14 +227,16 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
         return s;
       }));
     };
-    // Khi sticker bị xóa
+    
     const handleDeleted = (data: { id: string }) => {
       console.log('Sticker deleted:', data);
       setStickers((prev) => prev.filter((s) => s.id !== data.id));
     };
+
     socketInstance.on("sticker:created", handleCreated);
     socketInstance.on("sticker:updated", handleUpdated);
     socketInstance.on("sticker:deleted", handleDeleted);
+    
     return () => {
       socketInstance.off("sticker:created", handleCreated);
       socketInstance.off("sticker:updated", handleUpdated);
@@ -176,84 +244,129 @@ export default function StickerBoard({ boardId }: { boardId: string }) {
     };
   }, [socketInstance]);
 
-  // --- OVERRIDE handleStickerChanged để emit socket ---
-  const handleStickerChanged = () => {
-    fetchStickers();
-  };
+  // Memoized sticker refresh để tránh unnecessary calls
+  const handleStickerChanged = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/stickers?boardId=${boardId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStickers(data);
+      }
+    } catch (error) {
+      console.error('Error refreshing stickers:', error);
+    }
+  }, [boardId]);
 
-  const handleCopyInviteLink = () => {
+  // Memoized invite link handler
+  const handleCopyInviteLink = useCallback(() => {
     const inviteUrl = `${window.location.origin}/boards/${boardId}/invite`;
     navigator.clipboard.writeText(inviteUrl);
     if (toast) toast.success("Invite link copied!");
     else window.alert("Invite link copied!");
-  };
+  }, [boardId, toast]);
 
-  if (loading) return <div>Loading...</div>;
-  if (!board) return <div>Board not found</div>;
+  // Memoized column data để tránh re-computing
+  const columnStickers = useMemo(() => {
+    return STICKER_TYPES.reduce((acc, col) => {
+      acc[col.key] = stickers.filter((s) => s.stickerType === col.key);
+      return acc;
+    }, {} as Record<string, Sticker[]>);
+  }, [stickers]);
 
-  // Chuẩn bị dữ liệu cho từng column
-  const columnStickers = STICKER_TYPES.reduce((acc, col) => {
-    acc[col.key] = stickers.filter((s) => s.stickerType === col.key);
-    return acc;
-  }, {} as Record<string, Sticker[]>);
+  // Memoized members list với role và online status
+  const membersWithStatus = useMemo(() => {
+    if (!board?.members) return [];
+    
+    return board.members.map((member) => {
+      const presenceMember = presenceMembers.find((p) => p.email === member.email);
+      return {
+        ...member,
+        online: presenceMember?.online || false,
+      };
+    });
+  }, [board?.members, presenceMembers]);
 
-  // Lấy danh sách thành viên (kết hợp từ board.members và presenceMembers để có đủ role và trạng thái online)
-  const members: { email: string; role: string; online?: boolean }[] = (board.members || []).map((m) => {
-    const presence = presenceMembers.find((p) => p.email === m.email);
-    return { ...m, online: presence ? presence.online : false };
-  });
-
-  console.log('Board members:', board?.members);
-  console.log('Presence members:', presenceMembers);
-  console.log('Combined members:', members);
-
-  const onlineCount = members.filter(m => m.online).length;
-  const totalCount = members.length;
+  // Early returns với loading states
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <ComponentSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!board) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-gray-500">Board not found</p>
+        <Link href="/dashboard">
+          <Button variant="outline" className="mt-4">
+            Quay lại Dashboard
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
-      <div className="mb-4">
-        <Link href="/dashboard" className="text-blue-500 hover:underline text-sm">← Back to Boards</Link>
-      </div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold">{board.name}</h1>
-        <div className="flex items-center gap-3 flex-wrap">
-          <PresenceAvatars members={members} maxVisible={5} />
-                      <OnlineCounter
-              onlineCount={onlineCount}
-              totalCount={totalCount}
-              members={members}
-              className="relative z-20"
-            />
-          <Button
-            variant="outline"
-            className="gap-2"
+    <div className="p-6">
+      {/* Header với optimized rendering */}
+      <div className="flex justify-between items-center mb-6">
+                 <div>
+           <h1 className="text-2xl font-bold">{board.name}</h1>
+           {board.description && (
+             <p className="text-gray-600 mt-1">{board.description}</p>
+           )}
+         </div>
+        
+        <div className="flex items-center gap-4">
+          <OnlineCounter 
+            onlineCount={presenceMembers.filter(m => m.online).length}
+            totalCount={membersWithStatus.length}
+            members={membersWithStatus}
+          />
+          
+          <PresenceAvatars members={membersWithStatus} />
+          
+          <Button 
             onClick={handleCopyInviteLink}
-            title="Copy invite link"
+            variant="outline" 
+            size="sm"
+            className="flex items-center gap-2"
           >
             <Share2 className="w-4 h-4" />
-            Share
+            Invite
           </Button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 overflow-hidden">
-        {STICKER_TYPES.map((col) => (
+
+      {/* Columns */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {STICKER_TYPES.map((stickerType) => (
           <StickerColumn
-            key={col.key}
-            type={col.key}
-            label={col.label}
-            stickers={columnStickers[col.key]}
+            key={stickerType.key}
             boardId={boardId}
+            type={stickerType.key}
+            label={stickerType.label}
+            stickers={columnStickers[stickerType.key] || []}
             onStickerChanged={handleStickerChanged}
             onVoteAdd={voteAdd}
             onVoteRemove={voteRemove}
             onCommentAdd={commentAdd}
             onCommentUpdate={commentUpdate}
             onCommentDelete={commentDelete}
-            loading={loading}
           />
         ))}
       </div>
     </div>
   );
-} 
+});
+
+export default StickerBoard; 

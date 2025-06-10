@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import StickerBoard from "./components/StickerBoard";
+import StickerBoardClient from "./components/StickerBoardClient";
 
 export default async function BoardDetailPage({ params }: { params: Promise<{ boardId: string }> }) {
   const resolvedParams = await params;
@@ -9,5 +9,5 @@ export default async function BoardDetailPage({ params }: { params: Promise<{ bo
   if (!session?.user) {
     redirect("/auth/signin");
   }
-  return <StickerBoard boardId={resolvedParams.boardId} />;
+  return <StickerBoardClient boardId={resolvedParams.boardId} />;
 } 
