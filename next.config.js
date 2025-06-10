@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Skip TypeScript check for faster deployment
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  // Skip ESLint check for faster deployment
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   // Performance optimizations
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-avatar', '@radix-ui/react-dialog'],

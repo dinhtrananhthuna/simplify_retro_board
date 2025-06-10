@@ -1,5 +1,5 @@
 {
-  "name": "temp",
+  "name": "simplify-retro-board",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -18,7 +18,8 @@
     "check-bundle-size": "npm run build && node scripts/check-bundle-size.js",
     "debug-loops": "node scripts/debug-infinite-loop.js",
     "monitor-requests": "node scripts/monitor-requests.js",
-    "test-socket": "node scripts/test-socket.js"
+    "test-socket": "node scripts/test-socket.js",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",

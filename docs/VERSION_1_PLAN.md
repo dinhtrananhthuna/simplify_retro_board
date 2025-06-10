@@ -97,11 +97,11 @@ CREATE TABLE Stickers (
 - [x] Polish UI/UX
 
 ### Phase 4: Testing & Deployment (1 tuần)
-- [ ] Unit testing
+- [x] Unit testing
 - [ ] Integration testing
-- [ ] Performance testing
-- [ ] Setup local deployment
-- [ ] Documentation
+- [x] Performance testing
+- [x] Setup local deployment
+- [x] Documentation
 
 ## Ưu tiên phát triển
 1. Authentication system

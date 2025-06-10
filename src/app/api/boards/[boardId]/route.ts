@@ -110,7 +110,7 @@ export async function GET(
   }
 
   // Kiểm tra xem user có quyền truy cập board này không
-  const isMember = board.members.some(member => member.email === session.user?.email) || 
+  const isMember = board.members.some((member: { email: string; role: string }) => member.email === session.user?.email) || 
                    board.createdBy === session.user?.email;
   
   if (!isMember) {

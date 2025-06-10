@@ -2,9 +2,17 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useSession } from 'next-auth/react';
 import { ServerToClientEvents, ClientToServerEvents } from '@/types/socket';
-import type { Comment } from '@prisma/client';
+// Comment type will be inferred from socket events
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+// Dynamic SOCKET_URL để tránh build-time errors
+const getSocketURL = () => {
+  // Always return localhost for build-time, real URL for runtime
+  if (typeof window === 'undefined') {
+    return 'http://localhost:3000';
+  }
+  // Client-side: use env var hoặc current origin
+  return process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+};
 
 // Socket singleton để tránh tạo nhiều connections  
 let globalSocket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
@@ -15,8 +23,10 @@ interface UseSocketOptions {
   onPresenceLeft?: (data: { email: string }) => void;
   onVoteAdded?: (data: { stickerId: string; email: string }) => void;
   onVoteRemoved?: (data: { stickerId: string; email: string }) => void;
-  onCommentAdded?: (data: Comment) => void;
-  onCommentUpdated?: (data: Comment) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onCommentAdded?: (data: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onCommentUpdated?: (data: any) => void;
   onCommentDeleted?: (data: { id: string }) => void;
 }
 
@@ -95,12 +105,13 @@ export function useSocket(
     
     // Sử dụng singleton socket
     if (!globalSocket) {
-      console.log(`[useSocket] Creating new socket connection to: ${SOCKET_URL}`);
+      const socketURL = getSocketURL();
+      console.log(`[useSocket] Creating new socket connection to: ${socketURL}`);
       
       // Initialize socket server
       fetch('/api/socket').catch(() => {});
       
-      globalSocket = io(SOCKET_URL, {
+      globalSocket = io(socketURL, {
         path: '/api/socket',
         withCredentials: true,
         autoConnect: false,
