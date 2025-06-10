@@ -1,7 +1,7 @@
 import StickerForm from "./StickerForm";
 import StickerCard from "./StickerCard";
 import { Sticker } from "@/types/board";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 export default function StickerColumn({
   type,
@@ -31,6 +31,10 @@ export default function StickerColumn({
   const [newStickers, setNewStickers] = useState<Set<string>>(new Set());
   const [previousStickerIds, setPreviousStickerIds] = useState<Set<string>>(new Set());
 
+  // Create stable stickerIds to avoid infinite loops
+  const stickerIds = useMemo(() => stickers.map(s => s.id), [stickers]);
+  const stickerIdString = useMemo(() => stickerIds.join(','), [stickerIds]);
+
   // Track new stickers for animation - chỉ khi có sticker mới được thêm
   useEffect(() => {
     if (stickers.length === 0) {
@@ -38,7 +42,7 @@ export default function StickerColumn({
       return;
     }
 
-    const currentIds = new Set(stickers.map(s => s.id));
+    const currentIds = new Set(stickerIds);
     
     // Chỉ tìm stickers thực sự mới (không có trong previous)
     if (previousStickerIds.size > 0) {
@@ -57,7 +61,7 @@ export default function StickerColumn({
     }
     
     setPreviousStickerIds(currentIds);
-  }, [stickers.length, stickers.map(s => s.id).join(',')]);
+  }, [stickerIdString, previousStickerIds, stickerIds, stickers.length]); // Add stickers.length
 
   // Reset khi component unmount
   useEffect(() => {

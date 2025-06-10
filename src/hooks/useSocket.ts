@@ -82,13 +82,16 @@ export function useSocket(
     commentDelete
   }), [voteAdd, voteRemove, commentAdd, commentUpdate, commentDelete]);
 
+  // Extract user email for stable dependency
+  const userEmail = session?.user?.email;
+
   useEffect(() => {
     if (!boardId) {
       console.log(`[useSocket] Missing boardId:`, { boardId });
       return;
     }
     
-    console.log(`[useSocket] Setting up socket for board: ${boardId}, session:`, !!session?.user?.email);
+    console.log(`[useSocket] Setting up socket for board: ${boardId}, session:`, !!userEmail);
     
     // Sử dụng singleton socket
     if (!globalSocket) {
@@ -114,11 +117,11 @@ export function useSocket(
     let connectTimeout: NodeJS.Timeout | undefined;
     
     const handleConnection = () => {
-      console.log(`[useSocket] Connected! Session available:`, !!session?.user?.email);
+      console.log(`[useSocket] Connected! Session available:`, !!userEmail);
       // Chỉ join room nếu có session
-      if (session?.user?.email) {
+      if (userEmail) {
         console.log(`[useSocket] Emitting presence:join for board: ${boardId}`);
-        socket.emit('presence:join', { boardId, email: session.user.email });
+        socket.emit('presence:join', { boardId, email: userEmail });
       } else {
         console.log(`[useSocket] Socket connected but no session available yet`);
       }
@@ -148,9 +151,9 @@ export function useSocket(
     }
 
     // Join room nếu socket đã connected và có session
-    if (socket.connected && session?.user?.email) {
+    if (socket.connected && userEmail) {
       console.log(`[useSocket] Socket already connected, joining room for board: ${boardId}`);
-      socket.emit('presence:join', { boardId, email: session.user.email });
+      socket.emit('presence:join', { boardId, email: userEmail });
     }
 
     // Event listeners với cleanup
@@ -227,17 +230,17 @@ export function useSocket(
         socket.off('comment:deleted', currentOptions.onCommentDeleted);
       }
     };
-  }, [boardId]); // Chỉ phụ thuộc vào boardId để tránh infinite re-subscription
+  }, [boardId, userEmail]); // Include userEmail but handle carefully
 
   // Separate effect để handle session change
   useEffect(() => {
-    if (!boardId || !session?.user?.email || !globalSocket?.connected) {
+    if (!boardId || !userEmail || !globalSocket?.connected) {
       return;
     }
     
     console.log(`[useSocket] Session available, joining room for board: ${boardId}`);
-    globalSocket.emit('presence:join', { boardId, email: session.user.email });
-  }, [boardId, session?.user?.email, isConnected]);
+    globalSocket.emit('presence:join', { boardId, email: userEmail });
+  }, [boardId, userEmail, isConnected]);
 
   return {
     socket: globalSocket,

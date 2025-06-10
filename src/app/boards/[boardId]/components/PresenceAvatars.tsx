@@ -57,11 +57,29 @@ export default function PresenceAvatars({
                     />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  <div className="text-center">
-                    <div className="font-semibold">{member.email}</div>
-                    <div className="text-xs text-gray-400">
-                      {member.role === "owner" ? "Owner" : "Member"} • {member.online ? "Online" : "Offline"}
+                <TooltipContent side="bottom">
+                  <div className="flex flex-col gap-2 min-w-[180px]">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${
+                        member.online ? "bg-green-400 shadow-sm shadow-green-400/50" : "bg-gray-500"
+                      }`} />
+                      <span className="font-semibold text-white truncate">
+                        {member.email}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        member.role === "owner" 
+                          ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30" 
+                          : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                      }`}>
+                        {member.role === "owner" ? "👑 Owner" : "👤 Member"}
+                      </span>
+                      <span className={`text-xs font-medium ${
+                        member.online ? "text-green-300" : "text-gray-400"
+                      }`}>
+                        {member.online ? "🟢 Online" : "⚫ Offline"}
+                      </span>
                     </div>
                   </div>
                 </TooltipContent>
@@ -85,20 +103,34 @@ export default function PresenceAvatars({
                     </span>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  <div>
-                    <div className="font-semibold mb-1">
-                      Còn {extraCount} thành viên khác
+                <TooltipContent side="bottom">
+                  <div className="min-w-[200px]">
+                    <div className="font-semibold mb-3 text-white border-b border-gray-600 pb-2">
+                      +{extraCount} thành viên khác
                     </div>
-                    <div className="text-xs space-y-1">
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
                       {members.slice(maxVisible).map((member) => (
-                        <div key={member.email} className="flex items-center gap-2">
-                          <div
-                            className={`w-2 h-2 rounded-full ${
-                              member.online ? "bg-green-500" : "bg-gray-400"
-                            }`}
-                          />
-                          <span>{member.email}</span>
+                        <div key={member.email} className="flex items-center justify-between group">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <div className={`w-2.5 h-2.5 rounded-full ${
+                              member.online ? "bg-green-400 shadow-sm shadow-green-400/50" : "bg-gray-500"
+                            }`} />
+                            <span className="text-white text-sm truncate">{member.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2 ml-2">
+                            <span className={`px-1.5 py-0.5 rounded text-xs ${
+                              member.role === "owner" 
+                                ? "bg-yellow-500/20 text-yellow-300" 
+                                : "bg-blue-500/20 text-blue-300"
+                            }`}>
+                              {member.role === "owner" ? "👑" : "👤"}
+                            </span>
+                            <span className={`text-xs ${
+                              member.online ? "text-green-300" : "text-gray-400"
+                            }`}>
+                              {member.online ? "🟢" : "⚫"}
+                            </span>
+                          </div>
                         </div>
                       ))}
                     </div>

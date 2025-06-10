@@ -19,9 +19,11 @@ function TooltipContent({ className, ...props }: TooltipPrimitive.TooltipContent
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
-        sideOffset={4}
+        sideOffset={8}
         className={cn(
-          "z-50 overflow-hidden rounded-md bg-gray-900 px-3 py-1.5 text-xs text-white shadow-md animate-in fade-in-0",
+          "z-50 overflow-hidden rounded-lg bg-gradient-to-br from-gray-900 to-gray-800 px-4 py-3 text-sm text-white shadow-xl border border-gray-700/50 backdrop-blur-sm animate-in fade-in-0 zoom-in-95 duration-200",
+          "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+          "before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-br before:from-white/10 before:to-white/5 before:pointer-events-none",
           className
         )}
         {...props}

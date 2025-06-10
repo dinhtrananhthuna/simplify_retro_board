@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, useMemo, memo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
@@ -35,7 +35,13 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
   const toast = useAppToast();
+  const toastRef = useRef(toast);
   const [presenceMembers, setPresenceMembers] = useState<PresenceMember[]>([]);
+
+  // Update toastRef when toast changes but don't use it as dependency
+  useEffect(() => {
+    toastRef.current = toast;
+  });
 
   // Memoized fetch functions với stable dependencies
   const fetchBoard = useCallback(async () => {
@@ -47,12 +53,10 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
       }
     } catch (error) {
       console.error('Error fetching board:', error);
-      // Sử dụng optional chaining thay vì dependency
-      if (toast?.error) {
-        toast.error('Không thể tải board');
-      }
+      // Use toastRef to avoid dependency
+      toastRef.current?.error?.('Không thể tải board');
     }
-  }, [boardId]); // Chỉ boardId dependency
+  }, [boardId]); // Remove toast dependency
 
   const fetchStickers = useCallback(async () => {
     try {
@@ -63,12 +67,10 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
       }
     } catch (error) {
       console.error('Error fetching stickers:', error);
-      // Sử dụng optional chaining thay vì dependency  
-      if (toast?.error) {
-        toast.error('Không thể tải stickers');
-      }
+      // Use toastRef to avoid dependency
+      toastRef.current?.error?.('Không thể tải stickers');
     }
-  }, [boardId]); // Chỉ boardId dependency
+  }, [boardId]); // Remove toast dependency
 
   // Initial data loading với stable fetch functions
   useEffect(() => {
@@ -101,19 +103,15 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
          }
          return [...prev, { ...data, online: true }];
        });
-       // Sử dụng function thay vì dependency để tránh infinite loop
-       if (toast?.success) {
-         toast.success(`${data.email} vừa tham gia board!`);
-       }
+       // Use toastRef to avoid dependency
+       toastRef.current?.success?.(`${data.email} vừa tham gia board!`);
      },
     onPresenceLeft: (data: { email: string }) => {
       console.log('Member left:', data);
       setPresenceMembers((prev) => 
         prev.map((m) => m.email === data.email ? { ...m, online: false } : m)
       );
-      if (toast?.info) {
-        toast.info(`${data.email} vừa rời board!`);
-      }
+      toastRef.current?.info?.(`${data.email} vừa rời board!`);
     },
     onVoteAdded: (data: { stickerId: string; email: string }) => {
       console.log('Vote added:', data);
@@ -129,9 +127,7 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
         }
         return sticker;
       }));
-      if (toast?.success) {
-        toast.success(`${data.email} đã vote cho sticker!`);
-      }
+      toastRef.current?.success?.(`${data.email} đã vote cho sticker!`);
     },
     onVoteRemoved: (data: { stickerId: string; email: string }) => {
       console.log('Vote removed:', data);
@@ -144,9 +140,7 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
         }
         return sticker;
       }));
-      if (toast?.info) {
-        toast.info(`${data.email} đã bỏ vote cho sticker!`);
-      }
+      toastRef.current?.info?.(`${data.email} đã bỏ vote cho sticker!`);
     },
          onCommentAdded: (data: Comment) => {
       console.log('[StickerBoard] Comment added event received:', data);
@@ -161,9 +155,7 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
         console.log('[StickerBoard] Updated stickers after comment add:', updated);
         return updated;
       });
-      if (toast?.success) {
-        toast.success(`${data.email} đã thêm comment!`);
-      }
+      toastRef.current?.success?.(`${data.email} đã thêm comment!`);
     },
          onCommentUpdated: (data: Comment) => {
       console.log('Comment updated:', data);
@@ -178,9 +170,7 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
         }
         return sticker;
       }));
-      if (toast?.info) {
-        toast.info(`${data.email} đã cập nhật comment!`);
-      }
+      toastRef.current?.info?.(`${data.email} đã cập nhật comment!`);
     },
     onCommentDeleted: (data: { id: string }) => {
       console.log('Comment deleted:', data);
@@ -191,11 +181,9 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
         }
         return sticker;
       }));
-      if (toast?.info) {
-        toast.info(`Comment đã được xóa!`);
-      }
+      toastRef.current?.info?.(`Comment đã được xóa!`);
     },
-  }), []); // Loại bỏ toast dependency để tránh infinite loop
+  }), []); // Remove toast dependency
 
   // Socket setup với optimized handlers
   const { socket: socketInstance, voteAdd, voteRemove, commentAdd, commentUpdate, commentDelete } = useSocket(
