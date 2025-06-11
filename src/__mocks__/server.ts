@@ -89,17 +89,21 @@ export const handlers = [
   }),
 
   // Sticker endpoints
-  http.get('/api/boards/:boardId/stickers', () => {
-    return HttpResponse.json([mockSticker])
+  http.get('/api/stickers', ({ request }) => {
+    const url = new URL(request.url)
+    const boardId = url.searchParams.get('boardId')
+    return HttpResponse.json([{
+      ...mockSticker,
+      boardId: boardId || mockSticker.boardId
+    }])
   }),
 
-  http.post('/api/boards/:boardId/stickers', async ({ params, request }) => {
+  http.post('/api/stickers', async ({ request }) => {
     const body = await request.json()
     return HttpResponse.json({
       ...mockSticker,
       ...body,
       id: 'new-sticker-id',
-      boardId: params.boardId,
     })
   }),
 
