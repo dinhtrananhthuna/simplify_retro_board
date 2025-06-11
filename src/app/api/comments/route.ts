@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { broadcastToBoard } from "../../../../lib/ably";
 
 // Lấy danh sách comment theo stickerId
 export async function GET(req: Request) {
@@ -27,6 +28,17 @@ export async function POST(req: Request) {
   if (!content || !stickerId) {
     return NextResponse.json({ message: "Missing fields" }, { status: 400 });
   }
+
+  // Lấy sticker để biết boardId
+  const sticker = await prisma.sticker.findUnique({
+    where: { id: stickerId },
+    select: { boardId: true }
+  });
+  
+  if (!sticker) {
+    return NextResponse.json({ message: "Sticker not found" }, { status: 404 });
+  }
+
   const comment = await prisma.comment.create({
     data: {
       content,
@@ -34,5 +46,12 @@ export async function POST(req: Request) {
       email: session.user.email,
     },
   });
+
+      // Emit Ably event cho tất cả users trong board
+    await broadcastToBoard(sticker.boardId, {
+      type: 'comment:added',
+      data: comment
+    });
+
   return NextResponse.json(comment);
 } 

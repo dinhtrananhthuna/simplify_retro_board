@@ -85,15 +85,31 @@ jest.mock('next-auth/react', () => ({
   SessionProvider: ({ children }) => children,
 }))
 
-// Mock socket.io-client
-jest.mock('socket.io-client', () => ({
-  io: jest.fn(() => ({
-    emit: jest.fn(),
-    on: jest.fn(),
-    off: jest.fn(),
-    disconnect: jest.fn(),
-    connected: false,
-  })),
+// Mock Ably
+jest.mock('ably', () => ({
+  __esModule: true,
+  default: {
+    Realtime: jest.fn(() => ({
+      channels: {
+        get: jest.fn(() => ({
+          subscribe: jest.fn(),
+          unsubscribe: jest.fn(),
+          publish: jest.fn(),
+          presence: {
+            enter: jest.fn(() => Promise.resolve()),
+            leave: jest.fn(() => Promise.resolve()),
+            subscribe: jest.fn(),
+            unsubscribe: jest.fn(),
+          },
+        })),
+      },
+      connection: {
+        on: jest.fn(),
+        off: jest.fn(),
+        state: 'connected',
+      },
+    })),
+  },
 }))
 
 // Add React import for motion mock

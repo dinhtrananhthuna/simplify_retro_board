@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { broadcastToBoard } from '../../../lib/ably';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
@@ -48,6 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
     return res.status(200).json(stickers);
   }
+  
   if (req.method === 'POST') {
     const session = await getServerSession(req, res, authOptions);
     if (!session?.user?.email) {
@@ -57,10 +59,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!content || !stickerType || !boardId) {
       return res.status(400).json({ message: 'Missing fields' });
     }
+    
     let finalPosition = position;
     if (finalPosition === undefined) {
       finalPosition = await prisma.sticker.count({ where: { boardId, stickerType } });
     }
+    
     const sticker = await prisma.sticker.create({
       data: {
         content,
@@ -71,14 +75,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         createdBy: session.user.email,
         position: finalPosition,
       },
+      include: {
+        votes: true,
+        comments: true,
+      },
     });
-    // Emit socket event nếu có io
-    const socketRes = res.socket as { server?: { io?: { emit: (event: string, data: unknown) => void } } };
-    if (socketRes?.server?.io) {
-      socketRes.server.io.emit('sticker:created', sticker);
-    }
+
+    // Emit Ably event cho tất cả users trong board
+    await broadcastToBoard(boardId, {
+      type: 'sticker:created',
+      data: sticker
+    });
+
     return res.status(200).json(sticker);
   }
+  
   res.setHeader('Allow', ['GET', 'POST']);
   res.status(405).end(`Method ${req.method} Not Allowed`);
 } 

@@ -4,13 +4,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
 import { useAppToast } from "@/hooks/useAppToast";
-import { useSocket } from "@/hooks/useSocket";
+import { useAbly } from "@/hooks/useAbly";
 import { Board, Sticker, PresenceMember, Comment } from "@/types/board";
 
 // Direct imports để debug issue
 import StickerColumn from "./StickerColumn";
 import PresenceAvatars from "./PresenceAvatars";
 import OnlineCounter from "./OnlineCounter";
+import ConnectionStatus from "./ConnectionStatus";
 
 // Component loading fallback
 const ComponentSkeleton = () => (
@@ -29,19 +30,21 @@ interface StickerBoardProps {
 
 // Memoized component để tránh unnecessary re-renders
 const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) {
-  console.log('[StickerBoard] Component rendering with boardId:', boardId);
+  console.log('[StickerBoard] ===== COMPONENT RE-RENDER ===== boardId:', boardId);
   
   const [board, setBoard] = useState<Board | null>(null);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
   const toast = useAppToast();
+  console.log('[StickerBoard] toast object created:', !!toast);
   const toastRef = useRef(toast);
   const [presenceMembers, setPresenceMembers] = useState<PresenceMember[]>([]);
 
   // Update toastRef when toast changes but don't use it as dependency
   useEffect(() => {
+    console.log('[StickerBoard] toast useEffect triggered');
     toastRef.current = toast;
-  });
+  }, [toast]);
 
   // Memoized fetch functions với stable dependencies
   const fetchBoard = useCallback(async () => {
@@ -77,25 +80,38 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
     const loadData = async () => {
       setLoading(true);
       try {
-        await Promise.all([fetchBoard(), fetchStickers()]);
+        // ✅ INLINE functions để tránh dependencies hoàn toàn  
+        const [boardRes, stickersRes] = await Promise.all([
+          fetch(`/api/boards/${boardId}`),
+          fetch(`/api/stickers?boardId=${boardId}`)
+        ]);
+        
+        if (boardRes.ok) {
+          const boardData = await boardRes.json();
+          setBoard(boardData);
+        }
+        
+        if (stickersRes.ok) {
+          const stickersData = await stickersRes.json();
+          setStickers(stickersData);
+        }
       } catch (error) {
         console.error('Error loading data:', error);
+        toastRef.current?.error?.('Không thể tải dữ liệu board');
       } finally {
         setLoading(false);
       }
     };
     
     loadData();
-  }, [fetchBoard, fetchStickers]); // Sử dụng stable fetch functions
+  }, [boardId]); // ✅ CHỈ DEPEND VÀO boardId, KHÔNG depend vào fetchBoard, fetchStickers
 
-     // Memoized socket event handlers với stable references
+     // Stable SSE event handlers
    const socketHandlers = useMemo(() => ({
      onPresenceList: (data: { members: PresenceMember[] }) => {
-       console.log('Received presence list:', data);
        setPresenceMembers(data.members);
      },
      onPresenceJoined: (data: { email: string; role: string }) => {
-       console.log('Member joined:', data);
        setPresenceMembers((prev) => {
          const exists = prev.find((m) => m.email === data.email);
          if (exists) {
@@ -103,18 +119,15 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
          }
          return [...prev, { ...data, online: true }];
        });
-       // Use toastRef to avoid dependency
        toastRef.current?.success?.(`${data.email} vừa tham gia board!`);
      },
     onPresenceLeft: (data: { email: string }) => {
-      console.log('Member left:', data);
       setPresenceMembers((prev) => 
         prev.map((m) => m.email === data.email ? { ...m, online: false } : m)
       );
       toastRef.current?.info?.(`${data.email} vừa rời board!`);
     },
     onVoteAdded: (data: { stickerId: string; email: string }) => {
-      console.log('Vote added:', data);
       setStickers((prev) => prev.map((sticker) => {
         if (sticker.id === data.stickerId) {
           const newVote = { 
@@ -127,10 +140,8 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
         }
         return sticker;
       }));
-      toastRef.current?.success?.(`${data.email} đã vote cho sticker!`);
     },
     onVoteRemoved: (data: { stickerId: string; email: string }) => {
-      console.log('Vote removed:', data);
       setStickers((prev) => prev.map((sticker) => {
         if (sticker.id === data.stickerId) {
           return { 
@@ -140,25 +151,16 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
         }
         return sticker;
       }));
-      toastRef.current?.info?.(`${data.email} đã bỏ vote cho sticker!`);
     },
          onCommentAdded: (data: Comment) => {
-      console.log('[StickerBoard] Comment added event received:', data);
-      setStickers((prev) => {
-        const updated = prev.map((sticker) => {
-          if (sticker.id === data.stickerId) {
-            console.log('[StickerBoard] Adding comment to sticker:', sticker.id);
-            return { ...sticker, comments: [...(sticker.comments || []), data] };
-          }
-          return sticker;
-        });
-        console.log('[StickerBoard] Updated stickers after comment add:', updated);
-        return updated;
-      });
-      toastRef.current?.success?.(`${data.email} đã thêm comment!`);
+      setStickers((prev) => prev.map((sticker) => {
+        if (sticker.id === data.stickerId) {
+          return { ...sticker, comments: [...(sticker.comments || []), data] };
+        }
+        return sticker;
+      }));
     },
          onCommentUpdated: (data: Comment) => {
-      console.log('Comment updated:', data);
       setStickers((prev) => prev.map((sticker) => {
         if (sticker.id === data.stickerId) {
           return { 
@@ -170,10 +172,8 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
         }
         return sticker;
       }));
-      toastRef.current?.info?.(`${data.email} đã cập nhật comment!`);
     },
     onCommentDeleted: (data: { id: string }) => {
-      console.log('Comment deleted:', data);
       setStickers((prev) => prev.map((sticker) => {
         const updatedComments = (sticker.comments || []).filter((comment) => comment.id !== data.id);
         if (updatedComments.length !== (sticker.comments || []).length) {
@@ -181,56 +181,43 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
         }
         return sticker;
       }));
-      toastRef.current?.info?.(`Comment đã được xóa!`);
     },
-  }), []); // Remove toast dependency
+  }), []); // ✅ NO DEPENDENCIES - COMPLETELY STABLE
 
-  // Socket setup với optimized handlers
-  const { socket: socketInstance, voteAdd, voteRemove, commentAdd, commentUpdate, commentDelete } = useSocket(
+  // ✅ Ably setup với optimized handlers - STABLE REFERENCE
+  const { voteAdd, voteRemove, commentAdd, commentUpdate, commentDelete, isConnected, isConnecting } = useAbly(
     boardId,
-    socketHandlers
+    useMemo(() => ({
+      ...socketHandlers,
+      onStickerCreated: (data: Sticker) => {
+        setStickers((prev) => [...prev, data]);
+      },
+      onStickerUpdated: (data: Sticker) => {
+        setStickers((prev) => prev.map((s) => {
+          if (s.id === data.id) {
+            return {
+              ...data,
+              votes: data.votes && data.votes.length >= 0 ? data.votes : s.votes || [],
+              comments: data.comments && data.comments.length >= 0 ? data.comments : s.comments || []
+            };
+          }
+          return s;
+        }));
+      },
+      onStickerDeleted: (data: { id: string }) => {
+        console.log('[StickerBoard] 🗑️ STICKER DELETED EVENT RECEIVED:', data);
+        setStickers((prev) => {
+          const beforeCount = prev.length;
+          const after = prev.filter((s) => s.id !== data.id);
+          console.log('[StickerBoard] Stickers count:', beforeCount, '->', after.length);
+          return after;
+        });
+        toastRef.current?.info?.(`Sticker đã được xóa`);
+      }
+    }), [socketHandlers]) // ✅ ONLY depend on socketHandlers - which has NO dependencies
   );
 
-  // Memoized socket sticker listeners để tránh re-subscribing
-  useEffect(() => {
-    if (!socketInstance) return;
-    
-    console.log('Setting up socket sticker listeners');
-    
-    const handleCreated = (data: Sticker) => {
-      console.log('Sticker created:', data);
-      setStickers((prev) => [...prev, data]);
-    };
-    
-    const handleUpdated = (data: Sticker) => {
-      console.log('Sticker updated:', data);
-      setStickers((prev) => prev.map((s) => {
-        if (s.id === data.id) {
-          return {
-            ...data,
-            votes: data.votes && data.votes.length >= 0 ? data.votes : s.votes || [],
-            comments: data.comments && data.comments.length >= 0 ? data.comments : s.comments || []
-          };
-        }
-        return s;
-      }));
-    };
-    
-    const handleDeleted = (data: { id: string }) => {
-      console.log('Sticker deleted:', data);
-      setStickers((prev) => prev.filter((s) => s.id !== data.id));
-    };
-
-    socketInstance.on("sticker:created", handleCreated);
-    socketInstance.on("sticker:updated", handleUpdated);
-    socketInstance.on("sticker:deleted", handleDeleted);
-    
-    return () => {
-      socketInstance.off("sticker:created", handleCreated);
-      socketInstance.off("sticker:updated", handleUpdated);
-      socketInstance.off("sticker:deleted", handleDeleted);
-    };
-  }, [socketInstance]);
+  // SSE automatically handles sticker events through sseHandlers
 
   // Memoized sticker refresh để tránh unnecessary calls
   const handleStickerChanged = useCallback(async () => {
@@ -315,8 +302,14 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
          </div>
         
         <div className="flex items-center gap-4">
+          <ConnectionStatus 
+            isConnected={isConnected}
+            isConnecting={isConnecting}
+            onlineCount={membersWithStatus.filter(m => m.online).length}
+          />
+          
           <OnlineCounter 
-            onlineCount={presenceMembers.filter(m => m.online).length}
+            onlineCount={membersWithStatus.filter(m => m.online).length}
             totalCount={membersWithStatus.length}
             members={membersWithStatus}
           />

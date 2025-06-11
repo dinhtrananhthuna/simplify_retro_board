@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { broadcastToBoard } from '../../../lib/ably';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { stickerId } = req.query;
@@ -38,11 +39,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
     });
-    // Emit socket event nếu có io
-    const socketRes = res.socket as { server?: { io?: { emit: (event: string, data: unknown) => void } } };
-    if (socketRes?.server?.io) {
-      socketRes.server.io.emit('sticker:updated', updated);
-    }
+
+    // Emit Ably event cho tất cả users trong board
+    await broadcastToBoard(sticker.boardId, {
+      type: 'sticker:updated',
+      data: updated
+    });
+
     return res.status(200).json(updated);
   }
   if (req.method === 'DELETE') {
@@ -57,12 +60,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (sticker.createdBy !== session.user.email) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
+
+    const boardId = sticker.boardId; // Lưu boardId trước khi delete
     await prisma.sticker.delete({ where: { id: stickerId } });
-    // Emit socket event nếu có io
-    const socketRes2 = res.socket as { server?: { io?: { emit: (event: string, data: unknown) => void } } };
-    if (socketRes2?.server?.io) {
-      socketRes2.server.io.emit('sticker:deleted', { id: stickerId });
-    }
+
+    // Emit Ably event cho tất cả users trong board
+    await broadcastToBoard(boardId, {
+      type: 'sticker:deleted',
+      data: { id: stickerId, boardId }
+    });
+
     return res.status(200).json({ message: 'Sticker deleted' });
   }
   res.setHeader('Allow', ['PATCH', 'DELETE']);

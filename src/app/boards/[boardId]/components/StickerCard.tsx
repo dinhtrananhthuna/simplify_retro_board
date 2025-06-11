@@ -68,15 +68,31 @@ export default function StickerCard({
   const handleDelete = async () => {
     if (!confirm("Bạn có chắc muốn xóa sticker này?")) return;
     
+    console.log('[StickerCard] 🗑️ Starting delete for sticker:', sticker.id);
+    
     // Start delete animation
     setIsDeleting(true);
     
     // Wait for animation to complete before actual deletion
     setTimeout(async () => {
-      setLoading(true);
-      await fetch(`/api/stickers/${sticker.id}`, { method: "DELETE" });
-      setLoading(false);
-      onChanged();
+      try {
+        setLoading(true);
+        console.log('[StickerCard] 🚀 Sending DELETE request for sticker:', sticker.id);
+        
+        const response = await fetch(`/api/stickers/${sticker.id}`, { method: "DELETE" });
+        
+        if (response.ok) {
+          console.log('[StickerCard] ✅ DELETE request successful for sticker:', sticker.id);
+        } else {
+          console.error('[StickerCard] ❌ DELETE request failed:', response.status, response.statusText);
+        }
+        
+        setLoading(false);
+        onChanged();
+      } catch (error) {
+        console.error('[StickerCard] ❌ Error during DELETE:', error);
+        setLoading(false);
+      }
     }, 400); // Match CSS animation duration
   };
 
@@ -96,9 +112,18 @@ export default function StickerCard({
   const handleVote = () => {
     if (!currentUserEmail) return;
     
+    console.log('[StickerCard] 🗳️ Vote action:', { 
+      stickerId: sticker.id, 
+      hasVoted, 
+      action: hasVoted ? 'remove' : 'add',
+      userEmail: currentUserEmail 
+    });
+    
     if (hasVoted) {
+      console.log('[StickerCard] 🗳️ Calling onVoteRemove for sticker:', sticker.id);
       onVoteRemove(sticker.id);
     } else {
+      console.log('[StickerCard] 🗳️ Calling onVoteAdd for sticker:', sticker.id);
       onVoteAdd(sticker.id);
     }
   };
