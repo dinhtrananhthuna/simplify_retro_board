@@ -51,4 +51,20 @@ export interface PresenceMember {
   email: string;
   role: string;
   online: boolean;
+}
+
+export interface TimerState {
+  id: string;
+  boardId: string;
+  duration: number;        // seconds
+  startTime: number;       // timestamp 
+  isActive: boolean;
+  isPaused: boolean;
+  createdBy: string;
+}
+
+export interface TimerEvent {
+  type: 'timer:start' | 'timer:pause' | 'timer:resume' | 'timer:stop';
+  data: TimerState;
+  timestamp: number;
 } 

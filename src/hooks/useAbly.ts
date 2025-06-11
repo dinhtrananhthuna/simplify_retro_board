@@ -20,6 +20,10 @@ interface UseAblyOptions {
   onStickerCreated?: (data: any) => void;
   onStickerUpdated?: (data: any) => void;
   onStickerDeleted?: (data: { id: string }) => void;
+  onTimerStart?: (data: any) => void;
+  onTimerPause?: (data: any) => void;
+  onTimerResume?: (data: any) => void;
+  onTimerStop?: (data: any) => void;
 }
 
 export function useAbly(boardId?: string, options?: UseAblyOptions) {
@@ -110,6 +114,63 @@ export function useAbly(boardId?: string, options?: UseAblyOptions) {
       } catch (error) {
         console.error('[useAbly] Error deleting comment:', error);
       }
+    },
+
+    // Timer broadcast functions
+    timerBroadcastStart: async (timerData: any) => {
+      const channel = channelRef.current;
+      if (!channel || !session?.user?.email) return;
+      console.log('[useAbly] ⏱️ Broadcasting timer start:', timerData);
+      try {
+        await channel.publish('timer:start', {
+          ...timerData,
+          createdBy: session.user.email
+        });
+      } catch (error) {
+        console.error('[useAbly] Error broadcasting timer start:', error);
+      }
+    },
+
+    timerBroadcastPause: async (timerData: any) => {
+      const channel = channelRef.current;
+      if (!channel || !session?.user?.email) return;
+      console.log('[useAbly] ⏱️ Broadcasting timer pause:', timerData);
+      try {
+        await channel.publish('timer:pause', {
+          ...timerData,
+          pausedBy: session.user.email
+        });
+      } catch (error) {
+        console.error('[useAbly] Error broadcasting timer pause:', error);
+      }
+    },
+
+    timerBroadcastResume: async (timerData: any) => {
+      const channel = channelRef.current;
+      if (!channel || !session?.user?.email) return;
+      console.log('[useAbly] ⏱️ Broadcasting timer resume:', timerData);
+      try {
+        await channel.publish('timer:resume', {
+          ...timerData,
+          resumedBy: session.user.email
+        });
+      } catch (error) {
+        console.error('[useAbly] Error broadcasting timer resume:', error);
+      }
+    },
+
+    timerBroadcastStop: async (timerData: any) => {
+      const channel = channelRef.current;
+      if (!channel || !session?.user?.email) return;
+      console.log('[useAbly] ⏱️ Broadcasting timer stop:', timerData);
+      try {
+        await channel.publish('timer:stop', {
+          ...timerData,
+          stoppedBy: session.user.email
+        });
+      } catch (error) {
+        console.error('[useAbly] Error broadcasting timer stop:', error);
+      }
     }
   }), [session?.user?.email]);
 
@@ -183,6 +244,18 @@ export function useAbly(boardId?: string, options?: UseAblyOptions) {
           break;
         case 'sticker:deleted':
           currentOptions?.onStickerDeleted?.(message.data);
+          break;
+        case 'timer:start':
+          currentOptions?.onTimerStart?.(message.data);
+          break;
+        case 'timer:pause':
+          currentOptions?.onTimerPause?.(message.data);
+          break;
+        case 'timer:resume':
+          currentOptions?.onTimerResume?.(message.data);
+          break;
+        case 'timer:stop':
+          currentOptions?.onTimerStop?.(message.data);
           break;
         default:
           console.log('[useAbly] Unknown message type:', message.name);

@@ -5,12 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
 import { useAppToast } from "@/hooks/useAppToast";
 import { useAbly } from "@/hooks/useAbly";
+import { useTimer } from "@/hooks/useTimer";
+import { useSession } from "next-auth/react";
 import { Board, Sticker, PresenceMember, Comment } from "@/types/board";
 
 // Direct imports để debug issue
 import StickerColumn from "./StickerColumn";
 import PresenceAvatars from "./PresenceAvatars";
 import OnlineCounter from "./OnlineCounter";
+import TimerControls from "./TimerControls";
+import TimerDisplay from "./TimerDisplay";
 
 // Component loading fallback
 const ComponentSkeleton = () => (
@@ -38,12 +42,33 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
   console.log('[StickerBoard] toast object created:', !!toast);
   const toastRef = useRef(toast);
   const [presenceMembers, setPresenceMembers] = useState<PresenceMember[]>([]);
+  
+  // Session for owner check
+  const { data: session } = useSession();
+  const isOwner = board?.createdBy === session?.user?.email;
+  
+  // Timer hook
+  const {
+    timeLeft,
+    isActive: timerIsActive,
+    isPaused: timerIsPaused,
+    formattedTime,
+    progress,
+    startTimer,
+    pauseTimer,
+    resumeTimer,
+    stopTimer,
+    onTimerEvent,
+    setBroadcastActions,
+  } = useTimer(boardId);
 
   // Update toastRef when toast changes but don't use it as dependency
   useEffect(() => {
     console.log('[StickerBoard] toast useEffect triggered');
     toastRef.current = toast;
   }, [toast]);
+
+
 
   // Memoized fetch functions với stable dependencies
   const fetchBoard = useCallback(async () => {
@@ -184,7 +209,19 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
   }), []); // ✅ NO DEPENDENCIES - COMPLETELY STABLE
 
   // ✅ Ably setup với optimized handlers - STABLE REFERENCE
-  const { voteAdd, voteRemove, commentAdd, commentUpdate, commentDelete, isConnected, isConnecting } = useAbly(
+  const { 
+    voteAdd, 
+    voteRemove, 
+    commentAdd, 
+    commentUpdate, 
+    commentDelete, 
+    isConnected, 
+    isConnecting,
+    timerBroadcastStart,
+    timerBroadcastPause,
+    timerBroadcastResume,
+    timerBroadcastStop
+  } = useAbly(
     boardId,
     useMemo(() => ({
       ...socketHandlers,
@@ -212,9 +249,45 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
           return after;
         });
         toastRef.current?.info?.(`Sticker đã được xóa`);
+      },
+      // Timer event handlers
+      onTimerStart: (data: any) => {
+        console.log('[StickerBoard] ⏰ Timer start event received:', data);
+        onTimerEvent({ type: 'timer:start', data });
+      },
+      onTimerPause: (data: any) => {
+        console.log('[StickerBoard] ⏰ Timer pause event received:', data);
+        onTimerEvent({ type: 'timer:pause', data });
+      },
+      onTimerResume: (data: any) => {
+        console.log('[StickerBoard] ⏰ Timer resume event received:', data);
+        onTimerEvent({ type: 'timer:resume', data });
+      },
+      onTimerStop: (data: any) => {
+        console.log('[StickerBoard] ⏰ Timer stop event received:', data);
+        onTimerEvent({ type: 'timer:stop', data });
       }
-    }), [socketHandlers]) // ✅ ONLY depend on socketHandlers - which has NO dependencies
+         }), [socketHandlers, onTimerEvent]) // ✅ Include onTimerEvent dependency
   );
+
+  // Connect timer with Ably broadcast actions
+  useEffect(() => {
+    console.log('[StickerBoard] 🔗 Timer broadcast connection effect');
+    console.log('[StickerBoard] setBroadcastActions available:', !!setBroadcastActions);
+    console.log('[StickerBoard] timerBroadcastStart available:', !!timerBroadcastStart);
+    
+    if (setBroadcastActions) {
+      console.log('[StickerBoard] 🚀 Connecting timer with Ably broadcast actions');
+      setBroadcastActions({
+        timerBroadcastStart,
+        timerBroadcastPause,
+        timerBroadcastResume,
+        timerBroadcastStop,
+      });
+    } else {
+      console.warn('[StickerBoard] ⚠️ setBroadcastActions not available');
+    }
+  }, [setBroadcastActions, timerBroadcastStart, timerBroadcastPause, timerBroadcastResume, timerBroadcastStop]);
 
   // SSE automatically handles sticker events through sseHandlers
 
@@ -301,6 +374,27 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
          </div>
         
         <div className="flex items-center gap-4">
+          {/* Timer Display - visible to all */}
+          <TimerDisplay
+            isActive={timerIsActive}
+            isPaused={timerIsPaused}
+            formattedTime={formattedTime}
+            progress={progress}
+          />
+          
+          {/* Timer Controls - only visible to owner */}
+          {isOwner && (
+            <TimerControls
+              boardId={boardId}
+              isActive={timerIsActive}
+              isPaused={timerIsPaused}
+              onStart={startTimer}
+              onPause={pauseTimer}
+              onResume={resumeTimer}
+              onStop={stopTimer}
+            />
+          )}
+          
           <OnlineCounter 
             onlineCount={membersWithStatus.filter(m => m.online).length}
             totalCount={membersWithStatus.length}
