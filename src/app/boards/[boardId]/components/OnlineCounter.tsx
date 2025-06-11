@@ -52,7 +52,7 @@ export default function OnlineCounter({
               <div className="space-y-2">
                 <div className="font-semibold text-green-300 flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-400 rounded-full shadow-sm shadow-green-400/50"></div>
-                  🟢 Đang online ({onlineMembers.length})
+                  Đang online ({onlineMembers.length})
                 </div>
                 <div className="space-y-1.5 pl-4 max-h-[150px] overflow-y-auto">
                   {onlineMembers.map((member) => (
@@ -78,7 +78,7 @@ export default function OnlineCounter({
               <div className="space-y-2">
                 <div className="font-semibold text-gray-400 flex items-center gap-2">
                   <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-                  ⚫ Offline ({offlineMembers.length})
+                  Offline ({offlineMembers.length})
                 </div>
                 <div className="space-y-1.5 pl-4 max-h-[120px] overflow-y-auto">
                   {offlineMembers.map((member) => (

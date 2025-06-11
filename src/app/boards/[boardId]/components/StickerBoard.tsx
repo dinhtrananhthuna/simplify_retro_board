@@ -11,7 +11,6 @@ import { Board, Sticker, PresenceMember, Comment } from "@/types/board";
 import StickerColumn from "./StickerColumn";
 import PresenceAvatars from "./PresenceAvatars";
 import OnlineCounter from "./OnlineCounter";
-import ConnectionStatus from "./ConnectionStatus";
 
 // Component loading fallback
 const ComponentSkeleton = () => (
@@ -302,12 +301,6 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
          </div>
         
         <div className="flex items-center gap-4">
-          <ConnectionStatus 
-            isConnected={isConnected}
-            isConnecting={isConnecting}
-            onlineCount={membersWithStatus.filter(m => m.online).length}
-          />
-          
           <OnlineCounter 
             onlineCount={membersWithStatus.filter(m => m.online).length}
             totalCount={membersWithStatus.length}
