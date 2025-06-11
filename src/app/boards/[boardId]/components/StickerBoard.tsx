@@ -364,16 +364,22 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
 
   return (
     <div className="p-6">
-      {/* Header với optimized rendering */}
-      <div className="flex justify-between items-center mb-6">
-                 <div>
-           <h1 className="text-2xl font-bold">{board.name}</h1>
-           {board.description && (
-             <p className="text-gray-600 mt-1">{board.description}</p>
-           )}
-         </div>
+      {/* Header với optimized rendering - responsive layout */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
+        {/* Board name và description - canh trái */}
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
+            {board.title}
+          </h1>
+          {board.description && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+              {board.description}
+            </p>
+          )}
+        </div>
         
-        <div className="flex items-center gap-4">
+        {/* Control panel - canh phải */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 flex-shrink-0">
           {/* Timer Display - visible to all */}
           <TimerDisplay
             isActive={timerIsActive}

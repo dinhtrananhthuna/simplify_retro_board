@@ -64,10 +64,10 @@ export const useTimer = (boardId: string): UseTimerReturn => {
       if (typeof window !== 'undefined' && 'Audio' in window) {
         try {
           const audio = new Audio('/notification.mp3');
-          audio.volume = 0.5;
+          audio.volume = 0.6;
           audio.play().catch(() => {
             // Gracefully handle if audio fails
-            console.log('Could not play notification sound');
+            console.log('Could not play notification sound - file might be missing');
           });
         } catch (error) {
           // Audio not supported or file not found

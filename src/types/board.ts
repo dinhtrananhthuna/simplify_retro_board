@@ -39,7 +39,7 @@ export interface BoardMember {
 
 export interface Board {
   id: string;
-  name: string;
+  title: string;
   description?: string;
   createdBy: string;
   createdAt: Date;
