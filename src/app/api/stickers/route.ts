@@ -47,7 +47,7 @@ export async function GET(req: Request) {
       votes: true,
       comments: true,
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
   });
   
   return NextResponse.json(stickers);
@@ -68,6 +68,7 @@ export async function POST(req: Request) {
   
   let finalPosition = position;
   if (finalPosition === undefined) {
+    // Simple count-based position for basic ordering, actual sort will use createdAt
     finalPosition = await prisma.sticker.count({ where: { boardId, stickerType } });
   }
   

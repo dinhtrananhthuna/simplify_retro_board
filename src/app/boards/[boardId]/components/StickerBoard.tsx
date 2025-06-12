@@ -226,7 +226,7 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
     useMemo(() => ({
       ...socketHandlers,
       onStickerCreated: (data: Sticker) => {
-        setStickers((prev) => [...prev, data]);
+        setStickers((prev) => [data, ...prev]);
       },
       onStickerUpdated: (data: Sticker) => {
         setStickers((prev) => prev.map((s) => {

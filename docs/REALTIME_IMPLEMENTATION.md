@@ -74,7 +74,7 @@ interface ClientToServerEvents {
 - [x] Update StickerBoard component để hỗ trợ real-time
 - [x] Thêm UI cho presence (online/offline status)
 - [x] Implement loading states và error handling
-- [ ] Thêm animations cho real-time updates
+- [x] Thêm animations cho real-time updates
 
 ### Phase 4: Testing & Optimization (1 ngày)
 - [ ] Unit testing cho socket events

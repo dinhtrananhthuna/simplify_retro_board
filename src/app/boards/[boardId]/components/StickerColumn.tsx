@@ -89,7 +89,7 @@ export default function StickerColumn({
         ) : (
           stickers
             .slice()
-            .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
             .map((sticker) => {
               const isNew = newStickers.has(sticker.id);
               
