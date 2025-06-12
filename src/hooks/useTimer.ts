@@ -125,7 +125,20 @@ export const useTimer = (boardId: string): UseTimerReturn => {
   const pauseTimer = useCallback(() => {
     setTimerState(prev => {
       if (!prev) return null;
-      const updatedTimer = { ...prev, isPaused: true };
+      const now = Date.now();
+      const elapsed = (now - prev.startTime) / 1000;
+      const remaining = Math.max(0, prev.duration - elapsed);
+      
+      const updatedTimer = { 
+        ...prev, 
+        isPaused: true,
+        // Store current remaining time when paused
+        remainingTime: remaining
+      };
+      
+      // Also update local timeLeft for immediate UI update
+      setTimeLeft(Math.ceil(remaining));
+      
       // Broadcast to other clients
       broadcastActionsRef.current?.timerBroadcastPause?.(updatedTimer);
       return updatedTimer;
@@ -134,18 +147,24 @@ export const useTimer = (boardId: string): UseTimerReturn => {
 
   const resumeTimer = useCallback(() => {
     setTimerState(prev => {
-      if (!prev) return null;
-      // Adjust start time to account for pause duration
+      if (!prev || !prev.remainingTime) return null;
+      
+      // Calculate new startTime: current time - (total duration - remaining time)
+      const newStartTime = Date.now() - (prev.duration - prev.remainingTime) * 1000;
+      
       const updatedTimer = { 
         ...prev, 
         isPaused: false,
-        startTime: Date.now() - (prev.duration - timeLeft) * 1000
+        startTime: newStartTime,
+        // Clear remainingTime as we're now using calculated time
+        remainingTime: undefined
       };
+      
       // Broadcast to other clients
       broadcastActionsRef.current?.timerBroadcastResume?.(updatedTimer);
       return updatedTimer;
     });
-  }, [timeLeft]);
+  }, []);
 
   const stopTimer = useCallback(() => {
     // Store current state before clearing for broadcast
@@ -172,11 +191,38 @@ export const useTimer = (boardId: string): UseTimerReturn => {
         break;
         
       case 'timer:pause':
-        setTimerState(prev => prev ? { ...prev, isPaused: true } : null);
+        setTimerState(prev => {
+          if (!prev) return null;
+          
+          // If the event data has remainingTime, use it, otherwise calculate
+          let remaining;
+          if (event.data.remainingTime !== undefined) {
+            remaining = event.data.remainingTime;
+          } else {
+            const now = Date.now();
+            const elapsed = (now - prev.startTime) / 1000;
+            remaining = Math.max(0, prev.duration - elapsed);
+          }
+          
+          // Update timeLeft immediately for UI
+          setTimeLeft(Math.ceil(remaining));
+          
+          return { 
+            ...prev, 
+            isPaused: true,
+            remainingTime: remaining
+          };
+        });
         break;
         
       case 'timer:resume':
-        setTimerState(prev => prev ? { ...prev, isPaused: false } : null);
+        // Fix: Update both isPaused and startTime from broadcasted data
+        setTimerState(event.data);
+        // Recalculate time left based on the new startTime
+        const nowResume = Date.now();
+        const elapsedResume = (nowResume - event.data.startTime) / 1000;
+        const remainingResume = Math.max(0, event.data.duration - elapsedResume);
+        setTimeLeft(Math.ceil(remainingResume));
         break;
         
       case 'timer:stop':

@@ -61,6 +61,7 @@ export interface TimerState {
   isActive: boolean;
   isPaused: boolean;
   createdBy: string;
+  remainingTime?: number;  // seconds remaining when paused
 }
 
 export interface TimerEvent {
