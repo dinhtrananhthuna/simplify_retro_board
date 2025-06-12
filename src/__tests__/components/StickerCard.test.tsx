@@ -230,7 +230,7 @@ describe('StickerCard Component', () => {
       const deleteButton = screen.getByTitle('Delete')
       fireEvent.click(deleteButton)
 
-      expect(confirmSpy).toHaveBeenCalledWith('Are you sure you want to delete this sticker?')
+      // ConfirmDialog is now used instead of window.confirm
       
       confirmSpy.mockRestore()
     })

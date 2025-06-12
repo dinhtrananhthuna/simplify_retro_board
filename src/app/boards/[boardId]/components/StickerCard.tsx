@@ -6,6 +6,7 @@ import { Sticker, Vote } from "@/types/board";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 function truncateEmail(email: string, max = 18) {
   if (!email) return "";
@@ -66,8 +67,6 @@ export default function StickerCard({
   }, [voteCount, commentCount, prevVoteCount, prevCommentCount]);
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this sticker?")) return;
-
     try {
       const response = await fetch(`/api/stickers/${sticker.id}`, {
         method: 'DELETE',
@@ -141,14 +140,21 @@ export default function StickerCard({
           >
             <Pencil size={16} />
           </button>
-          <button 
-            className="p-1 text-red-500 hover:bg-red-100 rounded transition-colors duration-150" 
-            onClick={handleDelete} 
-            disabled={loading || isDeleting} 
-            title="Delete"
+          <ConfirmDialog
+            title="Delete Sticker"
+            description="Are you sure you want to delete this sticker? This action cannot be undone."
+            onConfirm={handleDelete}
+            confirmText="Delete"
+            cancelText="Cancel"
           >
-            <Trash2 size={16} />
-          </button>
+            <button 
+              className="p-1 text-red-500 hover:bg-red-100 rounded transition-colors duration-150" 
+              disabled={loading || isDeleting} 
+              title="Delete"
+            >
+              <Trash2 size={16} />
+            </button>
+          </ConfirmDialog>
         </div>
       )}
       

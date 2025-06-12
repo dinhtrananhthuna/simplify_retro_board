@@ -5,6 +5,7 @@ import { Pencil, Trash2, CheckCircle, XCircle, Send, MessageCircle, Sparkles } f
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // Remove heavy Framer Motion and replace with CSS transitions
 import "./comment-animations.css";
@@ -98,14 +99,21 @@ const CommentItem = memo(function CommentItem({
                 >
                   <Pencil className="w-3 h-3" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-gray-400 hover:text-red-600"
-                  onClick={() => onDelete(comment.id)}
+                <ConfirmDialog
+                  title="Delete Comment"
+                  description="Are you sure you want to delete this comment? This action cannot be undone."
+                  onConfirm={() => onDelete(comment.id)}
+                  confirmText="Delete"
+                  cancelText="Cancel"
                 >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-gray-400 hover:text-red-600"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </ConfirmDialog>
               </div>
             )}
           </div>
@@ -275,8 +283,6 @@ const CommentSection = memo(function CommentSection({
   }, [editContent, editingId, onCommentUpdate]);
 
   const handleDeleteComment = useCallback(async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this comment?")) return;
-    
     setLoading(true);
     try {
       await onCommentDelete(id);
