@@ -36,12 +36,12 @@ export default function StickerForm({ boardId, stickerType, onCreated }: {
       setJustCreated(true);
       setTimeout(() => setJustCreated(false), 1000);
       onCreated();
-      if (toast) toast.success("Tạo sticker thành công!");
-      else window.alert("Tạo sticker thành công!");
+      if (toast) toast.success("Sticker created successfully!");
+      else window.alert("Sticker created successfully!");
     } else {
-      setError("Tạo sticker thất bại");
-      if (toast) toast.error("Tạo sticker thất bại!");
-      else window.alert("Tạo sticker thất bại!");
+      setError("Failed to create sticker");
+      if (toast) toast.error("Failed to create sticker!");
+      else window.alert("Failed to create sticker!");
     }
     setLoading(false);
   };

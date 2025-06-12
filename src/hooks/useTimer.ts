@@ -58,7 +58,7 @@ export const useTimer = (boardId: string): UseTimerReturn => {
     // Timer finished
     if (remaining <= 0) {
       setTimerState(prev => prev ? { ...prev, isActive: false } : null);
-      toast?.success?.('⏰ Hết thời gian!');
+      toast?.success?.('⏰ Time is up!');
       
       // Optional: Play notification sound
       if (typeof window !== 'undefined' && 'Audio' in window) {

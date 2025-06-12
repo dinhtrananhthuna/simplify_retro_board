@@ -248,7 +248,7 @@ const StickerBoard = memo(function StickerBoard({ boardId }: StickerBoardProps) 
           console.log('[StickerBoard] Stickers count:', beforeCount, '->', after.length);
           return after;
         });
-        toastRef.current?.info?.(`Sticker đã được xóa`);
+        toastRef.current?.info?.(`Sticker has been deleted`);
       },
       // Timer event handlers
       onTimerStart: (data: any) => {

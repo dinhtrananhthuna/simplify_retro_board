@@ -115,24 +115,25 @@ const CommentItem = memo(function CommentItem({
               <Textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="min-h-[60px] text-sm resize-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Chỉnh sửa comment..."
+                placeholder="Edit comment..."
+                className="min-h-[60px] text-sm"
                 autoFocus
               />
-              <div className="flex gap-2">
-                <Button type="submit" size="sm" className="h-7 px-3 text-xs">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Lưu
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  type="submit"
+                  size="sm" 
+                  variant="outline"
+                >
+                  Save
                 </Button>
                 <Button 
-                  type="button" 
-                  variant="outline" 
+                  type="button"
                   size="sm" 
-                  className="h-7 px-3 text-xs"
+                  variant="ghost" 
                   onClick={cancelEdit}
                 >
-                  <XCircle className="w-3 h-3 mr-1" />
-                  Hủy
+                  Cancel
                 </Button>
               </div>
             </form>
@@ -173,7 +174,7 @@ const AddCommentForm = memo(function AddCommentForm({
         <Textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Thêm comment..."
+          placeholder="Add comment..."
           className="min-h-[80px] resize-none focus:ring-2 focus:ring-blue-500"
           disabled={loading}
         />
@@ -189,7 +190,7 @@ const AddCommentForm = memo(function AddCommentForm({
             ) : (
               <Send className="w-3 h-3" />
             )}
-            {isSubmitting ? 'Đang gửi...' : 'Gửi'}
+            {isSubmitting ? 'Sending...' : 'Send'}
           </Button>
         </div>
       </form>
@@ -274,7 +275,7 @@ const CommentSection = memo(function CommentSection({
   }, [editContent, editingId, onCommentUpdate]);
 
   const handleDeleteComment = useCallback(async (id: string) => {
-    if (!window.confirm("Bạn có chắc muốn xóa comment này?")) return;
+    if (!window.confirm("Are you sure you want to delete this comment?")) return;
     
     setLoading(true);
     try {
@@ -340,7 +341,7 @@ const CommentSection = memo(function CommentSection({
             <div className="p-8 text-center">
               <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500 text-sm">
-                Chưa có comment nào. Hãy là người đầu tiên!
+                No comments yet. Be the first!
               </p>
             </div>
           )}
@@ -357,7 +358,7 @@ const CommentSection = memo(function CommentSection({
                 className="w-full justify-start gap-2 text-gray-600 hover:text-gray-900"
               >
                 <MessageCircle className="w-4 h-4" />
-                Thêm comment...
+                Add comment...
               </Button>
             </div>
           ) : (

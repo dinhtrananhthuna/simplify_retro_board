@@ -66,34 +66,22 @@ export default function StickerCard({
   }, [voteCount, commentCount, prevVoteCount, prevCommentCount]);
 
   const handleDelete = async () => {
-    if (!confirm("Bạn có chắc muốn xóa sticker này?")) return;
-    
-    console.log('[StickerCard] 🗑️ Starting delete for sticker:', sticker.id);
-    
-    // Start delete animation
-    setIsDeleting(true);
-    
-    // Wait for animation to complete before actual deletion
-    setTimeout(async () => {
-      try {
-        setLoading(true);
-        console.log('[StickerCard] 🚀 Sending DELETE request for sticker:', sticker.id);
-        
-        const response = await fetch(`/api/stickers/${sticker.id}`, { method: "DELETE" });
-        
-        if (response.ok) {
-          console.log('[StickerCard] ✅ DELETE request successful for sticker:', sticker.id);
-        } else {
-          console.error('[StickerCard] ❌ DELETE request failed:', response.status, response.statusText);
-        }
-        
-        setLoading(false);
+    if (!confirm("Are you sure you want to delete this sticker?")) return;
+
+    try {
+      const response = await fetch(`/api/stickers/${sticker.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
         onChanged();
-      } catch (error) {
-        console.error('[StickerCard] ❌ Error during DELETE:', error);
-        setLoading(false);
       }
-    }, 400); // Match CSS animation duration
+    } catch (error) {
+      console.error('Error deleting sticker:', error);
+    }
   };
 
   const handleEdit = async (e: React.FormEvent) => {
@@ -176,7 +164,7 @@ export default function StickerCard({
               <Textarea
                 value={content}
                 onChange={e => setContent(e.target.value)}
-                placeholder="Cập nhật nội dung sticker..."
+                placeholder="Update sticker content..."
                 className="min-h-[80px] text-sm resize-none border-green-200 focus:border-green-400 transition-all duration-200"
                 disabled={loading}
                 maxLength={300}
@@ -196,7 +184,7 @@ export default function StickerCard({
                     disabled={loading}
                   >
                     <XCircle size={10} className="mr-1" />
-                    Hủy
+                    Cancel
                   </Button>
                   <Button
                     type="submit"
@@ -205,7 +193,7 @@ export default function StickerCard({
                     disabled={loading || content.trim() === ""}
                   >
                     <CheckCircle size={10} className="mr-1" />
-                    Lưu
+                    Save
                   </Button>
                 </div>
               </div>
@@ -246,7 +234,7 @@ export default function StickerCard({
                     ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 } ${!currentUserEmail ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                title={hasVoted ? "Bỏ vote" : "Vote"}
+                title={hasVoted ? "Remove vote" : "Vote"}
               >
                 👍 {voteCount}
               </button>
@@ -254,7 +242,7 @@ export default function StickerCard({
               <button
                 onClick={handleCommentToggle}
                 className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all duration-200"
-                title="Bình luận"
+                title="Comments"
               >
                 💬 {commentCount}
               </button>

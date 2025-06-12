@@ -106,7 +106,7 @@ export default function PresenceAvatars({
                 <TooltipContent side="bottom">
                   <div className="min-w-[200px]">
                     <div className="font-semibold mb-3 text-white border-b border-gray-600 pb-2">
-                      +{extraCount} thành viên khác
+                      +{extraCount} more members
                     </div>
                     <div className="space-y-2 max-h-[200px] overflow-y-auto">
                       {members.slice(maxVisible).map((member) => (

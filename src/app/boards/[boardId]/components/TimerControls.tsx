@@ -23,10 +23,10 @@ interface TimerControlsProps {
 }
 
 const PRESET_TIMES = [
-  { label: '5 phút', minutes: 5 },
-  { label: '10 phút', minutes: 10 },
-  { label: '15 phút', minutes: 15 },
-  { label: '30 phút', minutes: 30 },
+  { label: '5 minutes', minutes: 5 },
+  { label: '10 minutes', minutes: 10 },
+  { label: '15 minutes', minutes: 15 },
+  { label: '30 minutes', minutes: 30 },
 ];
 
 export default function TimerControls({
@@ -69,32 +69,33 @@ export default function TimerControls({
     }
   };
 
+  const handleStop = () => {
+    onStop();
+  };
+
   return (
     <div className="flex items-center gap-2">
       {/* Timer controls when active */}
       {isActive && (
         <div className="flex items-center gap-1">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={handlePauseResume}
-            className={cn(
-              "h-8 w-8 p-0",
-              isPaused ? "text-green-600 hover:text-green-700" : "text-amber-600 hover:text-amber-700"
-            )}
-            title={isPaused ? "Tiếp tục timer" : "Tạm dừng timer"}
+            title={isPaused ? "Resume timer" : "Pause timer"}
+            disabled={!isActive}
           >
-            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+            {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
           </Button>
           
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            onClick={onStop}
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-            title="Dừng timer"
+            onClick={handleStop}
+            title="Stop timer"
+            disabled={!isActive}
           >
-            <Square className="h-4 w-4" />
+            <Square className="w-4 h-4" />
           </Button>
         </div>
       )}
@@ -112,7 +113,7 @@ export default function TimerControls({
                 : "text-blue-600 hover:text-blue-700"
             )}
             disabled={isActive}
-            title="Bắt đầu timer"
+            title="Start timer"
           >
             <Timer className="h-4 w-4" />
           </Button>
@@ -122,12 +123,12 @@ export default function TimerControls({
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-blue-600" />
-              <h4 className="font-medium text-sm">Đặt Timer</h4>
+              <h4 className="font-medium text-sm">Set Timer</h4>
             </div>
 
             {/* Preset times */}
             <div className="space-y-2">
-              <Label className="text-xs text-gray-600">Thời gian có sẵn</Label>
+              <Label className="text-xs text-gray-600">Preset times</Label>
               <div className="grid grid-cols-2 gap-2">
                 {PRESET_TIMES.map((preset) => (
                   <Button
@@ -145,12 +146,12 @@ export default function TimerControls({
 
             {/* Custom time input */}
             <div className="space-y-3">
-              <Label className="text-xs text-gray-600">Tùy chỉnh thời gian</Label>
+              <Label className="text-xs text-gray-600">Custom time</Label>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <Input
                     type="number"
-                    placeholder="Phút"
+                    placeholder="Minutes"
                     value={customMinutes}
                     onChange={(e) => setCustomMinutes(e.target.value)}
                     min="0"
@@ -162,7 +163,7 @@ export default function TimerControls({
                 <div className="flex-1">
                   <Input
                     type="number"
-                    placeholder="Giây"
+                    placeholder="Seconds"
                     value={customSeconds}
                     onChange={(e) => setCustomSeconds(e.target.value)}
                     min="0"
@@ -176,14 +177,14 @@ export default function TimerControls({
                   disabled={!customMinutes && !customSeconds}
                   className="h-8 px-3 text-xs"
                 >
-                  Bắt đầu
+                  Start
                 </Button>
               </div>
             </div>
 
             {/* Quick note */}
             <p className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-              💡 Timer sẽ được đồng bộ với tất cả thành viên trong board
+              💡 Timer will be synced with all board members
             </p>
           </div>
         </DropdownMenuContent>

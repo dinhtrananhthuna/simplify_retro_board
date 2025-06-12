@@ -147,7 +147,7 @@ describe('StickerForm Component', () => {
       }
 
       await waitFor(() => {
-        expect(mockToast.success).toHaveBeenCalledWith('Tạo sticker thành công!')
+        expect(mockToast.success).toHaveBeenCalledWith('Sticker created successfully!')
       })
     })
   })
@@ -179,7 +179,7 @@ describe('StickerForm Component', () => {
       }
 
       await waitFor(() => {
-        expect(screen.getByText('Tạo sticker thất bại')).toBeInTheDocument()
+        expect(screen.getByText('Failed to create sticker')).toBeInTheDocument()
       })
     })
 
@@ -209,7 +209,7 @@ describe('StickerForm Component', () => {
       }
 
       await waitFor(() => {
-        expect(mockToast.error).toHaveBeenCalledWith('Tạo sticker thất bại!')
+        expect(mockToast.error).toHaveBeenCalledWith('Failed to create sticker!')
       })
     })
 
@@ -352,7 +352,7 @@ describe('StickerForm Component', () => {
       }
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith('Tạo sticker thành công!')
+        expect(alertSpy).toHaveBeenCalledWith('Sticker created successfully!')
       })
 
       alertSpy.mockRestore()

@@ -44,7 +44,7 @@ export default function OnlineCounter({
         <TooltipContent side="bottom">
           <div className="space-y-3 min-w-[280px] max-w-[350px]">
             <div className="font-bold text-center text-white border-b border-gray-600 pb-2">
-              📋 Thành viên trong board ({totalCount})
+              📋 Board Members ({totalCount})
             </div>
             
             {/* Online Members */}
@@ -103,7 +103,7 @@ export default function OnlineCounter({
             {members.length === 0 && (
               <div className="text-center text-gray-400 py-4">
                 <Users className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                <div className="text-sm">Không có thông tin thành viên</div>
+                <div className="text-sm">No member information available</div>
               </div>
             )}
 

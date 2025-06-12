@@ -134,8 +134,8 @@ describe('StickerCard Component', () => {
       fireEvent.click(editButton)
 
       expect(screen.getByDisplayValue('Test sticker content')).toBeInTheDocument()
-      expect(screen.getByText('Cập nhật')).toBeInTheDocument()
-      expect(screen.getByText('Hủy')).toBeInTheDocument()
+      expect(screen.getByText('Save')).toBeInTheDocument()
+      expect(screen.getByText('Cancel')).toBeInTheDocument()
     })
 
     it('should update sticker content when form is submitted', async () => {
@@ -230,7 +230,7 @@ describe('StickerCard Component', () => {
       const deleteButton = screen.getByTitle('Delete')
       fireEvent.click(deleteButton)
 
-      expect(confirmSpy).toHaveBeenCalledWith('Bạn có chắc muốn xóa sticker này?')
+      expect(confirmSpy).toHaveBeenCalledWith('Are you sure you want to delete this sticker?')
       
       confirmSpy.mockRestore()
     })
