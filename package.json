@@ -19,7 +19,7 @@
     "debug-loops": "node scripts/debug-infinite-loop.js",
     "monitor-requests": "node scripts/monitor-requests.js",
     "test-socket": "node scripts/test-socket.js",
-    "postinstall": "prisma generate"
+    "postinstall": "npx prisma generate --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
