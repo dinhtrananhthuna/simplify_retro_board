@@ -91,13 +91,15 @@ if [ $? -ne 0 ]; then
 fi
 
 # Database operations
-echo "🗄️ Running database operations..."
-if [ -f ".env.production" ]; then
-    npx prisma generate
-    npx prisma migrate deploy
-else
-    echo "⚠️  Skipping database operations - no .env.production file"
-fi
+# Database operations (temporarily disabled)
+echo "🗄️ Database operations disabled..."
+# if [ -f ".env.production" ]; then
+#     npx prisma generate
+#     npx prisma migrate deploy
+# else
+#     echo "⚠️  Skipping database operations - no .env.production file"
+# fi
+echo "⚠️  Database operations are currently disabled"
 
 # Build application
 echo "🏗️ Building application..."
