@@ -77,7 +77,18 @@ chmod -R u+w $DEPLOY_DIR/* 2>/dev/null || true
 # Install dependencies
 echo "📦 Installing dependencies..."
 cd $DEPLOY_DIR
-npm install
+
+# Clean previous installation
+rm -rf node_modules package-lock.json
+
+# Install with legacy peer deps to handle conflicts
+npm install --legacy-peer-deps
+
+# If above fails, try with force
+if [ $? -ne 0 ]; then
+    echo "⚠️  Standard install failed, trying with --force..."
+    npm install --force
+fi
 
 # Database operations
 echo "🗄️ Running database operations..."
