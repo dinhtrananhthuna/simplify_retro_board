@@ -91,15 +91,28 @@ if [ $? -ne 0 ]; then
 fi
 
 # Database operations
-# Database operations (temporarily disabled)
-echo "🗄️ Database operations disabled..."
-# if [ -f ".env.production" ]; then
-#     npx prisma generate
-#     npx prisma migrate deploy
-# else
-#     echo "⚠️  Skipping database operations - no .env.production file"
-# fi
-echo "⚠️  Database operations are currently disabled"
+# Database operations
+echo "🗄️ Running database operations..."
+if [ -f ".env.production" ]; then
+    # Ensure Prisma is available
+    if ! npm list @prisma/client > /dev/null 2>&1; then
+        echo "📦 Installing Prisma client..."
+        npm install @prisma/client
+    fi
+    
+    # Generate Prisma client
+    echo "🔄 Generating Prisma client..."
+    npx prisma generate --schema=./prisma/schema.prisma
+    
+    # Run migrations
+    echo "🗄️ Running database migrations..."
+    npx prisma migrate deploy --schema=./prisma/schema.prisma
+    
+    echo "✅ Database operations completed"
+else
+    echo "⚠️  No .env.production file found - skipping database operations"
+    echo "📖 Create .env.production first with DATABASE_URL"
+fi
 
 # Build application
 echo "🏗️ Building application..."

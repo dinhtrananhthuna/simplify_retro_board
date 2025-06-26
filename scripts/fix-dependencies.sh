@@ -33,7 +33,15 @@ if [ $? -eq 0 ]; then
     
     # Generate Prisma client
     echo "🗄️ Generating Prisma client..."
-    npx prisma generate
+    
+    # Ensure Prisma CLI is available
+    if ! npm list prisma > /dev/null 2>&1; then
+        echo "📦 Installing Prisma CLI..."
+        npm install prisma @prisma/client --save-dev
+    fi
+    
+    # Generate with explicit schema path
+    npx prisma generate --schema=./prisma/schema.prisma
     
     # Try building
     echo "🏗️ Testing build..."
