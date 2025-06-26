@@ -2,15 +2,29 @@
 
 # Auto Deploy Script for VPS
 # Usage: ./auto-deploy.sh
+# Note: Ensure user has write permissions to /opt directory
 
 set -e  # Exit on any error
 
 echo "🚀 Starting auto-deployment..."
 
 # Configuration
-REPO_URL="https://github.com/your-username/simplify_retro_board.git"
-DEPLOY_DIR="/opt"
+REPO_URL="https://github.com/dinhtrananhthuna/simplify_retro_board.git"
+DEPLOY_DIR="/home/oyhumgag/retroboard"
 TEMP_DIR="/tmp/simplify_retro_board_deploy"
+
+# Check if deploy directory exists, create if not
+if [ ! -d "$DEPLOY_DIR" ]; then
+    echo "📁 Creating deploy directory: $DEPLOY_DIR"
+    mkdir -p $DEPLOY_DIR
+fi
+
+# Check if user has write permission to deploy directory
+if [ ! -w "$DEPLOY_DIR" ]; then
+    echo "❌ Error: No write permission to $DEPLOY_DIR"
+    echo "🔧 Fix with: sudo chown -R $USER:$USER $DEPLOY_DIR"
+    exit 1
+fi
 
 # Stop PM2 if running
 echo "📛 Stopping current application..."
@@ -19,13 +33,13 @@ pm2 stop retro-board 2>/dev/null || echo "No PM2 process to stop"
 # Backup current deployment
 echo "💾 Creating backup..."
 if [ -f "$DEPLOY_DIR/package.json" ]; then
-    sudo cp -r $DEPLOY_DIR $DEPLOY_DIR.backup.$(date +%Y%m%d_%H%M%S)
+    cp -r $DEPLOY_DIR $DEPLOY_DIR.backup.$(date +%Y%m%d_%H%M%S)
     echo "✅ Backup created"
 fi
 
 # Clean temp directory
 echo "🧹 Cleaning temp directory..."
-sudo rm -rf $TEMP_DIR
+rm -rf $TEMP_DIR
 
 # Clone to temp directory
 echo "📥 Cloning repository..."
@@ -40,12 +54,12 @@ fi
 # Clear deployment directory (keep logs)
 echo "🧹 Clearing deployment directory..."
 cd $DEPLOY_DIR
-sudo find . -maxdepth 1 ! -name logs ! -name . ! -name .. -exec rm -rf {} + 2>/dev/null || true
+find . -maxdepth 1 ! -name logs ! -name . ! -name .. -exec rm -rf {} + 2>/dev/null || true
 
 # Move files from temp to deployment directory
 echo "📦 Moving files to deployment directory..."
-sudo mv $TEMP_DIR/* $DEPLOY_DIR/
-sudo mv $TEMP_DIR/.* $DEPLOY_DIR/ 2>/dev/null || true
+mv $TEMP_DIR/* $DEPLOY_DIR/
+mv $TEMP_DIR/.* $DEPLOY_DIR/ 2>/dev/null || true
 
 # Restore environment file
 if [ -f "/tmp/.env.production.backup" ]; then
@@ -56,9 +70,9 @@ else
     echo "📖 Check docs/ENV_TEMPLATE.md for instructions"
 fi
 
-# Fix ownership
-echo "🔧 Fixing ownership..."
-sudo chown -R $USER:$USER $DEPLOY_DIR/*
+# Ensure proper ownership (files should already be owned by current user)
+echo "🔧 Ensuring proper permissions..."
+chmod -R u+w $DEPLOY_DIR/* 2>/dev/null || true
 
 # Install dependencies
 echo "📦 Installing dependencies..."
@@ -90,7 +104,7 @@ module.exports = {
     name: 'retro-board',
     script: 'npm',
     args: 'start',
-    cwd: '/opt',
+    cwd: '/home/oyhumgag/retroboard',
     instances: 1,
     exec_mode: 'fork',
     env: {
@@ -133,7 +147,7 @@ fi
 
 # Clean up
 echo "🧹 Cleaning up..."
-sudo rm -rf $TEMP_DIR
+rm -rf $TEMP_DIR
 rm -f /tmp/.env.production.backup
 
 # Show status
@@ -143,6 +157,8 @@ pm2 status
 echo "✅ Deployment completed!"
 if [ -f ".env.production" ]; then
     echo "🌐 Check: https://kaitovu.io.vn/retroboard"
+    echo "📂 Deployed to: $DEPLOY_DIR"
 else
     echo "⚠️  Remember to create .env.production and start PM2"
+    echo "📂 Deploy directory: $DEPLOY_DIR"
 fi 

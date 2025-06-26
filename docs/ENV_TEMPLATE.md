@@ -4,7 +4,7 @@
 
 1. **Copy template to production file:**
 ```bash
-cd /opt
+cd /home/oyhumgag/retroboard
 nano .env.production
 ```
 

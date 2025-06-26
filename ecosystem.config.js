@@ -3,7 +3,7 @@ module.exports = {
     name: 'retro-board',
     script: 'npm',
     args: 'start',
-    cwd: '/opt',
+    cwd: '/home/oyhumgag/retroboard',
     instances: 1,
     exec_mode: 'fork',
     env: {
